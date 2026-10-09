@@ -58,7 +58,20 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--ink); ou
 .state .meta { margin-top: 6px; font-size: 15px; line-height: 1.4; color: var(--ink-2); }
 
 /* Controls: anchored to the bottom (the thumb zone) */
-.controls { margin-top: auto; padding-top: 24px; display: grid; gap: 12px; }
+.controls { margin-top: auto; padding-top: 24px; padding-bottom: 140px; display: grid; gap: 12px; }
+.flow { border: 0; padding: 0; min-width: 0; display: grid; gap: 12px; }
+.toilet-dock {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); z-index: 2;
+  width: min(430px, 100%); min-width: 0; border: 0;
+  padding: 12px 16px calc(env(safe-area-inset-bottom) + 16px); background: var(--ground);
+}
+.save-error {
+  position: fixed; top: calc(env(safe-area-inset-top) + 8px); left: 50%; transform: translateX(-50%); z-index: 6;
+  width: min(398px, calc(100% - 32px)); padding: 16px; border-radius: 16px;
+  background: var(--surface); box-shadow: var(--ring);
+  display: grid; gap: 8px; font-size: 15px; color: var(--ink-2);
+}
+.save-error .k { min-height: 44px; }
 .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 
@@ -73,7 +86,6 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--ink); ou
 .k small { font-size: 13px; font-weight: 500; color: var(--ink-3); min-height: 20px; display: grid; place-items: center; }
 .k.main { min-height: 116px; font-size: 26px; background: var(--key); color: var(--key-ink); box-shadow: none; }
 .k.main small { font-size: 15px; color: color-mix(in srgb, var(--key-ink) 78%, transparent); }
-.toilet.compact .k.main { min-height: 72px; font-size: 22px; }
 .k.voice { grid-column: span 2; }
 .k.off { color: var(--off); }
 .k.tall { min-height: 96px; font-size: 22px; }

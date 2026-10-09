@@ -2,6 +2,46 @@
 
 Updated at the end of every build session by whoever ran it.
 
+## 2026-10-09 (Yuykhan, Codex): PR #2 review fixes
+
+Branch: `phase1-app-shell`. Continuing [pull request #2](https://github.com/vvessels/evie/pull/2).
+
+### Changed
+- Failed writes show a persistent Try again action, retain the chosen entry and original
+  time, and release the save lock. Success feedback waits for the database write.
+- Bathroom logging and its session link save in one database transaction (both succeed,
+  or neither does), so retry cannot create a duplicate after a partial save.
+- Sleep-step and session-end drafts clear only after the database confirms the write.
+- Undo reopens session notes from their saved text. Continuing a note preserves the
+  original, and intentionally clearing a note still works.
+- Pee/Poop remain 116px tall in a fixed bottom area across home, panels and sessions.
+  Session actions and cancellation scroll above them on shorter screens.
+- The history query includes all unfinished sessions, even when started over 48 hours ago.
+
+### Verified
+- Added `npm test` with six regression tests: failed-save recovery followed by another log,
+  atomic bathroom/session saves, draft preservation on failed step/end writes, editable
+  notes after Undo, and old unfinished sessions without deleted rows or duplicates.
+- Tests, lint and the production build pass. Browser checks at 390 x 844 measured identical
+  Pee/Poop bounds on home, walk and the sleep loop: top 712, bottom 828, height 116 pixels.
+  At 320 x 568, the buttons remain 116px tall, bottom 552. Checked session-note Undo and
+  bathroom logging during a crate break without losing the draft.
+- Reviewed the changed layout against DESIGN.md sections 2–10: existing palette/type,
+  fixed large bathroom controls, accessible labels, error announcement, 44px retry target,
+  calm copy and no added motion. This is the documented Codex review path.
+
+### Next and limitations
+- Claude should review these fixes, then both people must test the installed home-screen
+  app on their real iPhones before merge. Desktop checks do not verify iOS keyboard,
+  safe-area, storage or haptic behavior.
+- Vercel root-directory setup and the status-line type-size decision below remain pending.
+- Failed actions are retained for retry while the app stays open. A total storage failure
+  cannot guarantee that an unsaved entry survives closing the app; no such claim is made.
+- Build reports a fallback-font metrics warning for Atkinson Hyperlegible Next. npm audit
+  also reports five high-severity entries in the existing eslint-config-next / braces
+  development-tool chain; the added test tools are not the reported source. Investigate
+  separately rather than accepting the suggested framework-linter downgrade blindly.
+
 ## 2026-10-09 (Yuykhan, Claude Code): phase 1, piece 1 of 4, app shell
 
 Branch: `phase1-app-shell`. Phase 1 is split into four pull requests so each can be reviewed and

@@ -14,7 +14,7 @@ export interface ToastData {
 const OFFSETS = [0, 5, 15, 30];
 const SHOW_MS = 6000;
 
-export default function Toast({ toast }: { toast: ToastData | null }) {
+export default function Toast({ toast, disabled = false }: { toast: ToastData | null; disabled?: boolean }) {
   const [hiddenKey, setHiddenKey] = useState<number | null>(null);
   const [offset, setOffset] = useState({ key: -1, minutes: 0 });
 
@@ -34,13 +34,14 @@ export default function Toast({ toast }: { toast: ToastData | null }) {
         <>
           <div className="toast-top">
             <span className="msg"><Check size={20} />{toast.text}</span>
-            <button onClick={() => { toast.undo(); setHiddenKey(toast.key); }}>Undo</button>
+            <button disabled={disabled} onClick={() => { toast.undo(); setHiddenKey(toast.key); }}>Undo</button>
           </div>
           {toast.onOffset && (
             <div className="offsets" role="group" aria-label="When it happened">
               {OFFSETS.map(m => (
                 <button
                   key={m}
+                  disabled={disabled}
                   aria-pressed={minutes === m}
                   onClick={() => { toast.onOffset!(m); setOffset({ key: toast.key, minutes: m }); }}
                 >

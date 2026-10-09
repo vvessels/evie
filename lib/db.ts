@@ -89,15 +89,38 @@ export async function addEvent(
 }
 
 export async function updateEvent(id: string, changes: Partial<Pick<EvieEvent, 'at' | 'endedAt' | 'data' | 'note' | 'deletedAt'>>) {
-  await db.events.update(id, { ...changes, updatedBy: ME, updatedAt: new Date().toISOString(), synced: 0 });
+  const updated = await db.events.update(id, { ...changes, updatedBy: ME, updatedAt: new Date().toISOString(), synced: 0 });
+  if (!updated) throw new Error('The event no longer exists');
+}
+
+/** Save the bathroom event and its session link together, so a retry cannot duplicate it. */
+export async function addInstantEvent(type: InstantType, data: EventData, at: string, sessionId?: string) {
+  return db.transaction('rw', db.events, async () => {
+    const ev = await addEvent(type, { data, at });
+    if (sessionId && (type === 'pee' || type === 'poop')) {
+      const session = await db.events.get(sessionId);
+      if (!session || session.deletedAt || session.endedAt) throw new Error('The session is no longer running');
+      const steps = [...(session.data.steps ?? [])];
+      const step = steps.at(-1);
+      if (step) {
+        steps[steps.length - 1] = { ...step, eventIds: [...(step.eventIds ?? []), ev.id] };
+        await updateEvent(sessionId, { data: { ...session.data, steps } });
+      }
+    }
+    return ev;
+  });
 }
 
 export const softDelete = (id: string) => updateEvent(id, { deletedAt: new Date().toISOString() });
 export const restore = (id: string) => updateEvent(id, { deletedAt: null });
 
-/** Everything from the last two days, oldest first, without deleted rows. */
+/** Recent history plus every unfinished session, oldest first, without deleted rows. */
 export async function recentEvents(): Promise<EvieEvent[]> {
   const since = new Date(Date.now() - 48 * 3600 * 1000).toISOString();
-  const rows = await db.events.where('at').above(since).sortBy('at');
-  return rows.filter(e => !e.deletedAt);
+  const [recent, running] = await Promise.all([
+    db.events.where('at').above(since).toArray(),
+    db.events.where('type').anyOf(SESSION_KINDS).filter(e => !e.endedAt && !e.deletedAt).toArray(),
+  ]);
+  const rows = new Map([...recent, ...running].map(e => [e.id, e]));
+  return [...rows.values()].filter(e => !e.deletedAt).sort((a, b) => a.at.localeCompare(b.at));
 }

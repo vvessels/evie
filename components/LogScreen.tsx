@@ -3,11 +3,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
-  addEvent, isSession, recentEvents, restore, softDelete, updateEvent,
+  addEvent, addInstantEvent, isSession, recentEvents, restore, softDelete, updateEvent,
   type EventData, type EvieEvent, type InstantType, type SessionKind, type StepName,
 } from '@/lib/db';
 import { describe, SESSION_NAME, sessionSummary } from '@/lib/describe';
-import { clearDraft, getDraft } from '@/lib/drafts';
+import { advanceSession, finishSession } from '@/lib/sessions';
+import { useSaveAction } from '@/lib/useSaveAction';
 import { haptic } from '@/lib/haptic';
 import { useNow } from '@/lib/hooks';
 import { clock, dayLabel, durShort, durText } from '@/lib/time';
@@ -33,15 +34,16 @@ export default function LogScreen() {
   const [view, setView] = useState<View>('home');
   const [done, setDone] = useState<DoneKey>(null);
   const [toast, setToast] = useState<ToastData | null>(null);
-  const busy = useRef(false);
+  const { run, saving, failed } = useSaveAction();
+  const blocked = saving || !!failed;
   const toastCount = useRef(0);
 
   // Escape closes a panel (keyboards and VoiceOver).
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setView('home'); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && !blocked) setView('home'); };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, []);
+  }, [blocked]);
 
   const ready = now > 0 && events !== undefined;
   const list = events ?? [];
@@ -53,100 +55,86 @@ export default function LogScreen() {
 
   const showToast = (t: Omit<ToastData, 'key'>) => setToast({ ...t, key: ++toastCount.current });
 
-  /** Save first (so nothing is lost), then let the check draw, then go home and show the toast. */
-  async function confirmThen(key: string, save: () => Promise<EvieEvent>) {
-    if (busy.current) return;
-    busy.current = true;
-    setDone(key);
-    haptic();
-    const ev = await save();
-    await wait(CONFIRM_MS);
-    setDone(null);
-    setView('home');
-    busy.current = false;
-    const toastKey = ++toastCount.current;
-    setToast({
-      key: toastKey,
-      text: `${describe(ev)}, ${clock(ev.at)}`,
-      undo: () => softDelete(ev.id),
-      onOffset: minutes => {
-        const at = new Date(Date.parse(ev.createdAt) - minutes * 60000).toISOString();
-        updateEvent(ev.id, { at });
-        setToast(t => (t?.key === toastKey ? { ...t, text: `${describe(ev)}, ${clock(at)}` } : t));
-      },
+  /** Show success only after the write commits; always clear the confirmation lock. */
+  function confirmThen(key: string, save: () => Promise<EvieEvent>) {
+    return run(async () => {
+      try {
+        const ev = await save();
+        setDone(key);
+        haptic();
+        await wait(CONFIRM_MS);
+        setView('home');
+        const toastKey = ++toastCount.current;
+        setToast({
+          key: toastKey,
+          text: `${describe(ev)}, ${clock(ev.at)}`,
+          undo: () => run(() => softDelete(ev.id)),
+          onOffset: minutes => {
+            const at = new Date(Date.parse(ev.at) - minutes * 60000).toISOString();
+            return run(async () => {
+              await updateEvent(ev.id, { at });
+              setToast(t => (t?.key === toastKey ? { ...t, text: `${describe(ev)}, ${clock(at)}` } : t));
+            });
+          },
+        });
+      } finally {
+        setDone(null);
+      }
     });
   }
 
   function logInstant(key: string, type: InstantType, data: EventData = {}) {
-    confirmThen(key, async () => {
-      const ev = await addEvent(type, { data });
-      // A pee or poop during a session is also noted on the step it happened in.
-      if (running && (type === 'pee' || type === 'poop')) {
-        const steps = [...(running.data.steps ?? [])];
-        const step = steps.at(-1);
-        if (step) {
-          steps[steps.length - 1] = { ...step, eventIds: [...(step.eventIds ?? []), ev.id] };
-          await updateEvent(running.id, { data: { ...running.data, steps } });
-        }
-      }
-      return ev;
+    const at = new Date().toISOString();
+    return confirmThen(key, () => addInstantEvent(type, data, at, running?.id));
+  }
+
+  function logNote(text: string) {
+    const at = new Date().toISOString();
+    return run(async () => {
+      const ev = await addEvent('note', { note: text, source: 'voice', at });
+      haptic();
+      setView('home');
+      showToast({ text: `Note, ${clock(ev.at)}`, undo: () => run(() => softDelete(ev.id)) });
     });
   }
 
-  async function logNote(text: string) {
-    const ev = await addEvent('note', { note: text, source: 'voice' });
-    haptic();
-    setView('home');
-    showToast({ text: `Note, ${clock(ev.at)}`, undo: () => softDelete(ev.id) });
-  }
-
-  async function startSession(kind: SessionKind) {
+  function startSession(kind: SessionKind) {
     if (running) return;
     const at = new Date().toISOString();
-    haptic();
-    await addEvent(kind, { at, data: { steps: [{ step: kind === 'sleep' ? 'settling' : 'running', label: kind === 'sleep' ? 'Settling' : SESSION_NAME[kind], at }] } });
+    return run(async () => {
+      await addEvent(kind, { at, data: { steps: [{ step: kind === 'sleep' ? 'settling' : 'running', label: kind === 'sleep' ? 'Settling' : SESSION_NAME[kind], at }] } });
+      haptic();
+    });
   }
 
-  async function nextStep(step: StepName, label: string) {
+  function nextStep(step: StepName, label: string) {
     if (!running) return;
-    const steps = [...(running.data.steps ?? [])];
-    // A note typed while she was out of the crate belongs to that step.
-    const draft = getDraft(running.id).trim();
-    if (draft && steps.length) {
-      const prev = steps[steps.length - 1];
-      steps[steps.length - 1] = { ...prev, note: [prev.note, draft].filter(Boolean).join('. ') };
-      clearDraft(running.id);
-    }
-    steps.push({ step, label, at: new Date().toISOString() });
-    haptic();
-    await updateEvent(running.id, { data: { ...running.data, steps } });
+    const at = new Date().toISOString();
+    return run(async () => {
+      await advanceSession(running, step, label, at);
+      haptic();
+    });
   }
 
-  async function endSession() {
+  function endSession() {
     if (!running) return;
     const s = running;
     const endedAt = new Date().toISOString();
-    const draft = getDraft(s.id).trim();
-    const changes: Parameters<typeof updateEvent>[1] = { endedAt };
-    if (draft && s.type !== 'sleep') changes.note = draft;
-    if (draft && s.type === 'sleep') {
-      const steps = [...(s.data.steps ?? [])];
-      const prev = steps[steps.length - 1];
-      steps[steps.length - 1] = { ...prev, note: [prev.note, draft].filter(Boolean).join('. ') };
-      changes.data = { ...s.data, steps };
-    }
-    clearDraft(s.id);
-    haptic();
-    await updateEvent(s.id, changes);
-    // Undo picks the session back up where it was, timer still running.
-    showToast({ text: sessionSummary({ ...s, ...changes } as EvieEvent), undo: () => updateEvent(s.id, { endedAt: null }) });
+    return run(async () => {
+      const ended = await finishSession(s, endedAt);
+      haptic();
+      // The reopened note field falls back to the saved session note.
+      showToast({ text: sessionSummary(ended), undo: () => run(() => updateEvent(s.id, { endedAt: null })) });
+    });
   }
 
-  async function cancelSession() {
+  function cancelSession() {
     if (!running) return;
     const id = running.id;
-    await softDelete(id);
-    showToast({ text: 'Session ended without saving', undo: () => restore(id) });
+    return run(async () => {
+      await softDelete(id);
+      showToast({ text: 'Session ended without saving', undo: () => run(() => restore(id)) });
+    });
   }
 
   // ---------- status line ----------
@@ -165,8 +153,8 @@ export default function LogScreen() {
     const ms = now - Date.parse(e.at);
     return ms < 60000 ? 'Just now' : `${durShort(ms)} ago`;
   };
-  const toilet = (compact: boolean) => (
-    <div className={`toilet pair${compact ? ' compact' : ''}`}>
+  const toilet = (
+    <div className="toilet pair">
       <button className="k main" onClick={() => setView('pee')} disabled={!ready}>
         Pee<small>{agoKey(lastPee)}</small>
       </button>
@@ -183,7 +171,7 @@ export default function LogScreen() {
   else if (view === 'poop') controls = <PoopPanel done={done} onCancel={home} onLog={(k, d) => logInstant(k, 'poop', d)} />;
   else if (view === 'meal') controls = <MealPanel done={done} onCancel={home} onLog={(k, d) => logInstant(k, 'meal', d)} />;
   else if (view === 'voice') controls = <VoicePanel now={now} onCancel={home} onLog={logNote} />;
-  else if (running) controls = <SessionPanel session={running} now={now} toilet={toilet(true)} onStep={nextStep} onEnd={endSession} onCancel={cancelSession} />;
+  else if (running) controls = <SessionPanel session={running} now={now} onStep={nextStep} onEnd={endSession} onCancel={cancelSession} />;
   else controls = (
     <>
       <div className="grid3">
@@ -201,7 +189,6 @@ export default function LogScreen() {
         })}
         <button className="k voice" disabled={!ready} onClick={() => setView('voice')}>Say it</button>
       </div>
-      {toilet(false)}
     </>
   );
 
@@ -215,8 +202,15 @@ export default function LogScreen() {
         <p className="big">{big}</p>
         <p className="meta">{meta}</p>
       </section>
-      <main className="controls" aria-label="Log">{controls}</main>
-      <Toast toast={toast} />
+      <main className="controls" aria-label="Log">
+        {failed && <div className="save-error" role="alert">
+          <p>Couldn’t save. Your entry is still here.</p>
+          <button className="k" disabled={saving} onClick={failed.retry}>{saving ? 'Saving…' : 'Try again'}</button>
+        </div>}
+        <fieldset className="flow" disabled={blocked} aria-busy={saving}>{controls}</fieldset>
+        <fieldset className="toilet-dock" disabled={!ready || blocked} aria-label="Bathroom logging">{toilet}</fieldset>
+      </main>
+      <Toast toast={toast} disabled={blocked} />
     </div>
   );
 }

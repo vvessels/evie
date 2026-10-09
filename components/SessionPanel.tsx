@@ -14,10 +14,9 @@ const SLEEP_HINT: Partial<Record<StepName, string>> = {
 
 const NOTE_QUESTION = { walk: 'Where did you go?', play: 'Anything to note?', training: 'Which command?', social: 'What happened, and how did she do?' } as const;
 
-export default function SessionPanel({ session, now, toilet, onStep, onEnd, onCancel }: {
+export default function SessionPanel({ session, now, onStep, onEnd, onCancel }: {
   session: EvieEvent;
   now: number;
-  toilet: React.ReactNode;
   onStep: (step: StepName, label: string) => void;
   onEnd: () => void;
   onCancel: () => void;
@@ -38,7 +37,7 @@ export default function SessionPanel({ session, now, toilet, onStep, onEnd, onCa
   const noteBox = (question: string) => (
     <label className="note-label" key={`${session.id}-${steps.length}`}>
       {question}
-      <textarea placeholder="Optional note" defaultValue={getDraft(session.id)} onChange={e => setDraft(session.id, e.target.value)} />
+      <textarea placeholder="Optional note" defaultValue={getDraft(session.id, sleep ? '' : session.note ?? '')} onChange={e => setDraft(session.id, e.target.value)} />
     </label>
   );
 
@@ -70,7 +69,6 @@ export default function SessionPanel({ session, now, toilet, onStep, onEnd, onCa
         {note}
       </section>
       <div className="session-actions">{actions}</div>
-      {toilet}
       <div className="session-tools"><button onClick={onCancel}>End without saving</button></div>
     </>
   );
