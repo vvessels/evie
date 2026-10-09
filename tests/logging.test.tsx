@@ -110,3 +110,22 @@ it('keeps unfinished sessions beyond 48 hours, without duplicates or deleted/old
   const recent = await addEvent('play');
   expect((await recentEvents()).map(e => e.id)).toEqual([running.id, recent.id]);
 });
+
+it('still saves a pee, unlinked, if its session ended before the save', async () => {
+  const session = await addEvent('sleep', { data: { steps: [{ step: 'out', label: 'Let her out', at: new Date().toISOString() }] } });
+  await updateEvent(session.id, { endedAt: new Date().toISOString() });
+  const ev = await addInstantEvent('pee', { target: 'on' }, new Date().toISOString(), session.id);
+  expect(await db.events.get(ev.id)).toBeTruthy();
+  expect((await db.events.get(session.id))?.data.steps?.[0].eventIds).toBeUndefined();
+});
+
+it('lets you dismiss a failed save so the app is usable again', async () => {
+  await ready();
+  vi.spyOn(db.events, 'add').mockRejectedValue(new Error('Storage broken'));
+  fireEvent.click(screen.getByRole('button', { name: 'Water' }));
+  await screen.findByRole('alert');
+  expect(screen.getByRole('button', { name: 'Pee' }).matches(':disabled')).toBe(true);
+  fireEvent.click(screen.getByRole('button', { name: 'Don’t save' }));
+  await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
+  expect(screen.getByRole('button', { name: 'Pee' }).matches(':disabled')).toBe(false);
+});

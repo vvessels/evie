@@ -2,6 +2,25 @@
 
 Updated at the end of every build session by whoever ran it.
 
+## 2026-10-09 (Yuykhan, Claude Code): review of Codex's fixes
+
+Branch: `phase1-app-shell`, [pull request #2](https://github.com/vvessels/evie/pull/2).
+Reviewed Codex's commit `abd31a5`; its fixes are sound. Two problems found and fixed:
+- The "Couldn't save" banner locked the whole app (Pee and Poop included) with only Try again.
+  If the save kept failing there was no way out. Added a "Don't save" button.
+- A pee logged during a session refused to save if the session had already ended. With sync
+  (piece 3), that happens when the other phone taps Woke up first, and the pee was lost. It now
+  saves, just not attached to the session.
+- Added `vercel.json` (framework Next.js, `npm run build`). After the Root Directory switch,
+  Vercel still served the repo as plain files (the old "Other" preset), so the app gave 404.
+- Two regression tests added; 8 of 8 pass, plus lint and build.
+
+### Next
+- [ ] Check the preview link opens the app, then both iPhones: add to home screen, log, sleep
+      loop, close and reopen mid-session, light and dark, haptic.
+- [ ] Merge pull request #2. Then piece 2 (accounts): needs the Supabase project URL and
+      publishable key typed into `.env.local` and Vercel by Yuykhan and Jason.
+
 ## 2026-10-09 (Yuykhan, Codex): PR #2 review fixes
 
 Branch: `phase1-app-shell`. Continuing [pull request #2](https://github.com/vvessels/evie/pull/2).

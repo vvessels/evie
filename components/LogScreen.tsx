@@ -205,7 +205,10 @@ export default function LogScreen() {
       <main className="controls" aria-label="Log">
         {failed && <div className="save-error" role="alert">
           <p>Couldn’t save. Your entry is still here.</p>
-          <button className="k" disabled={saving} onClick={failed.retry}>{saving ? 'Saving…' : 'Try again'}</button>
+          <div className="pair">
+            <button className="k" disabled={saving} onClick={failed.discard}>Don’t save</button>
+            <button className="k primary" disabled={saving} onClick={failed.retry}>{saving ? 'Saving…' : 'Try again'}</button>
+          </div>
         </div>}
         <fieldset className="flow" disabled={blocked} aria-busy={saving}>{controls}</fieldset>
         <fieldset className="toilet-dock" disabled={!ready || blocked} aria-label="Bathroom logging">{toilet}</fieldset>

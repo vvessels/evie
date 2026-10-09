@@ -5,7 +5,7 @@ import { useRef, useState } from 'react';
 export function useSaveAction() {
   const busy = useRef(false);
   const [saving, setSaving] = useState(false);
-  const [failed, setFailed] = useState<{ retry: () => Promise<void> } | null>(null);
+  const [failed, setFailed] = useState<{ retry: () => Promise<void>; discard: () => void } | null>(null);
 
   async function run(action: () => Promise<void>) {
     if (busy.current) return;
@@ -15,7 +15,7 @@ export function useSaveAction() {
       await action();
       setFailed(null);
     } catch {
-      setFailed({ retry: () => run(action) });
+      setFailed({ retry: () => run(action), discard: () => setFailed(null) });
     } finally {
       busy.current = false;
       setSaving(false);

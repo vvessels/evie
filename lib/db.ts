@@ -99,10 +99,10 @@ export async function addInstantEvent(type: InstantType, data: EventData, at: st
     const ev = await addEvent(type, { data, at });
     if (sessionId && (type === 'pee' || type === 'poop')) {
       const session = await db.events.get(sessionId);
-      if (!session || session.deletedAt || session.endedAt) throw new Error('The session is no longer running');
-      const steps = [...(session.data.steps ?? [])];
+      // If the session ended meanwhile (soon: on the other phone), still save the pee, just unlinked.
+      const steps = session && !session.deletedAt && !session.endedAt ? [...(session.data.steps ?? [])] : [];
       const step = steps.at(-1);
-      if (step) {
+      if (session && step) {
         steps[steps.length - 1] = { ...step, eventIds: [...(step.eventIds ?? []), ev.id] };
         await updateEvent(sessionId, { data: { ...session.data, steps } });
       }
