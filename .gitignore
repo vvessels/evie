@@ -1,0 +1,15 @@
+# Yuykhan's exported logs: private, never in git
+import/
+
+# Secret keys (Supabase, etc.)
+.env
+.env*.local
+
+# Installed packages and build output
+node_modules/
+.next/
+out/
+.vercel/
+
+# Mac clutter
+.DS_Store

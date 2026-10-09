@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Evie, Log v1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@300..800&display=swap" rel="stylesheet">
+<style>
+/* Evie Log: direction C's colours, type and feel, built around Yuykhan's workflow.
+   Controls live in the bottom half (the thumb zone). Every flow opens in that same spot,
+   so your thumb never has to travel. Viewed as Yuykhan. */
+:root {
+  --ground: #f2f2ef;
+  --surface: #ffffff;
+  --ink: #17191c;
+  --ink-2: #4a4e55;
+  --ink-3: #676b74;
+  --line: rgba(23, 25, 28, 0.10);
+  --line-2: rgba(23, 25, 28, 0.20);
+  --jason: #4c6884;
+  --yuykhan: #8a5a24;
+  --off: #b23a2a;
+  --key: #17191c; --key-ink: #f2f2ef;
+  --live: #8a5a24;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #151413; --surface: #1f1d1b; --ink: #ece8e2; --ink-2: #b9b3aa; --ink-3: #938c83;
+    --line: rgba(236, 232, 226, 0.09); --line-2: rgba(236, 232, 226, 0.18);
+    --jason: #95afc8; --yuykhan: #d8a96d; --off: #e2826f; --key: #2e2a26; --key-ink: #ece8e2; --live: #d8a96d;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #151413; --surface: #1f1d1b; --ink: #ece8e2; --ink-2: #b9b3aa; --ink-3: #938c83;
+  --line: rgba(236, 232, 226, 0.09); --line-2: rgba(236, 232, 226, 0.18);
+  --jason: #95afc8; --yuykhan: #d8a96d; --off: #e2826f; --key: #2e2a26; --key-ink: #ece8e2; --live: #d8a96d;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; margin: 0; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
+body {
+  background: var(--ground); color: var(--ink);
+  font-family: "Atkinson Hyperlegible Next", system-ui, sans-serif; font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased; max-width: 430px; margin: 0 auto; min-height: 100dvh;
+  display: flex; flex-direction: column;
+  padding: env(safe-area-inset-top) 16px calc(env(safe-area-inset-bottom) + 16px);
+}
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+button:focus-visible, textarea:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* Top: quiet */
+.top { display: flex; align-items: center; height: 56px; gap: 4px; }
+.top .name { font-size: 17px; font-weight: 700; flex: 1; }
+.top .name span { font-weight: 400; color: var(--ink-3); margin-left: 6px; }
+.icon-btn { min-width: 44px; height: 44px; display: grid; place-items: center; color: var(--ink-2); border-radius: 12px; }
+.text-btn { height: 44px; padding: 0 12px; font-size: 15px; font-weight: 700; color: var(--ink-2); border-radius: 12px; box-shadow: inset 0 0 0 1px var(--line-2); }
+
+.handoff { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; margin-top: 8px; padding: 0 14px;
+  border-radius: 14px; background: var(--surface); box-shadow: 0 0 0 1px var(--line); font-size: 15px; text-align: left; }
+.handoff b { font-weight: 700; }
+.handoff .go { margin-left: auto; color: var(--ink-3); }
+.dot { width: 9px; height: 9px; border-radius: 5px; flex: none; display: inline-block; }
+.dot.J { background: var(--jason); } .dot.Y { background: var(--yuykhan); }
+
+.state { margin-top: 28px; }
+.state .big { font-size: 34px; line-height: 1.1; font-weight: 700; letter-spacing: -0.015em; }
+.state .meta { margin-top: 6px; font-size: 16px; color: var(--ink-2); }
+
+/* Controls: anchored to the bottom */
+.controls { margin-top: auto; padding-top: 24px; display: grid; gap: 8px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.k {
+  min-height: 72px; border-radius: 16px; background: var(--surface); box-shadow: 0 0 0 1px var(--line-2), 0 1px 2px rgba(0,0,0,.05);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px;
+  font-size: 17px; font-weight: 700; text-align: center;
+  transition: transform 120ms cubic-bezier(.23,1,.32,1);
+}
+.k:active { transform: scale(0.97); }
+.k small { font-size: 13px; font-weight: 500; color: var(--ink-3); }
+.k.main { min-height: 116px; font-size: 26px; background: var(--key); color: var(--key-ink); box-shadow: none; }
+.k.main small { font-size: 15px; color: color-mix(in srgb, var(--key-ink) 65%, transparent); }
+.k.voice { grid-column: span 2; flex-direction: row; gap: 10px; }
+.k.voice span { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+.k.off { color: var(--off); }
+.k.done { background: var(--key); color: var(--key-ink); box-shadow: none; }
+.k.wide { grid-column: 1 / -1; }
+.k.tall { min-height: 96px; font-size: 22px; }
+.k.sel { box-shadow: inset 0 0 0 2px var(--ink); }
+
+/* Flow panels: open in the same spot as the buttons */
+.panel { display: grid; gap: 8px; }
+.panel-head { display: flex; align-items: center; justify-content: space-between; min-height: 44px; }
+.panel-head h2 { font-size: 22px; font-weight: 700; }
+.panel-head .q { font-size: 15px; color: var(--ink-3); margin-left: 8px; font-weight: 500; }
+.rowlabel { font-size: 14px; font-weight: 700; color: var(--ink-3); padding: 6px 2px 0; }
+.rowlabel.off { color: var(--off); }
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 4px; border-radius: 14px; background: var(--surface); box-shadow: 0 0 0 1px var(--line); }
+.seg button { height: 44px; border-radius: 10px; font-size: 15px; font-weight: 700; color: var(--ink-2); }
+.seg button[aria-pressed="true"] { background: var(--key); color: var(--key-ink); }
+
+/* Session (sleep, walk, play, training, socialization) */
+.session { border-radius: 20px; background: var(--surface); box-shadow: 0 0 0 1px var(--line-2); padding: 16px; display: grid; gap: 12px; }
+.session .now { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.session .now .label { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.pulse { width: 8px; height: 8px; border-radius: 4px; background: var(--live); }
+.session .clock { font-size: 44px; font-weight: 700; letter-spacing: -0.02em; line-height: 1; }
+.steps { list-style: none; padding: 0; display: grid; gap: 4px; font-size: 14px; color: var(--ink-3); max-height: 92px; overflow: auto; }
+.steps li { display: flex; justify-content: space-between; gap: 8px; }
+.steps li b { color: var(--ink-2); font-weight: 600; }
+textarea { width: 100%; min-height: 64px; resize: none; padding: 12px 14px; border-radius: 12px; border: 0;
+  background: var(--ground); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line-2); font: inherit; font-size: 17px; }
+textarea::placeholder { color: var(--ink-3); }
+.end { height: 48px; font-size: 15px; font-weight: 700; color: var(--ink-3); }
+
+/* Voice */
+.heard { border-radius: 14px; padding: 12px 14px; background: var(--surface); box-shadow: 0 0 0 1px var(--line-2); font-size: 16px; }
+.heard b { display: block; font-size: 19px; margin-top: 2px; }
+.hint { font-size: 13px; color: var(--ink-3); }
+#heardBox { display: grid; gap: 8px; }
+#heardBox:empty { display: none; }
+
+/* Toast: above the controls */
+.toast { position: fixed; left: 50%; top: calc(env(safe-area-inset-top) + 8px); width: min(398px, calc(100% - 32px));
+  transform: translate(-50%, -12px); opacity: 0; pointer-events: none; z-index: 5;
+  transition: transform 200ms cubic-bezier(.23,1,.32,1), opacity 200ms cubic-bezier(.23,1,.32,1);
+  background: var(--surface); border-radius: 16px; padding: 10px 12px 10px 16px; box-shadow: 0 0 0 1px var(--line-2), 0 10px 30px rgba(0,0,0,.14); }
+.toast.show { transform: translate(-50%, 0); opacity: 1; pointer-events: auto; }
+.toast-top { display: flex; align-items: center; gap: 8px; min-height: 34px; }
+.toast-top .msg { flex: 1; font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.toast-top .msg svg { flex: none; color: var(--yuykhan); }
+.toast-top button { height: 44px; padding: 0 8px; margin: -5px -4px; font-weight: 700; color: var(--yuykhan); }
+.offsets { display: flex; gap: 6px; margin-top: 4px; }
+.offsets button { flex: 1; height: 44px; border-radius: 10px; font-size: 14px; font-weight: 600; box-shadow: inset 0 0 0 1px var(--line-2); }
+.offsets button[aria-pressed="true"] { background: var(--key); color: var(--key-ink); box-shadow: none; }
+
+/* Records: one tap away */
+.records { position: fixed; inset: 0; z-index: 4; background: var(--ground); overflow: auto;
+  padding: env(safe-area-inset-top) 16px calc(env(safe-area-inset-bottom) + 24px);
+  transform: translateY(100%); transition: transform 260ms cubic-bezier(.23,1,.32,1); }
+.records.open { transform: none; }
+.records-in { max-width: 398px; margin: 0 auto; }
+.records h1 { font-size: 26px; font-weight: 700; margin: 8px 0 4px; }
+.records .sub { font-size: 15px; color: var(--ink-3); }
+.spine { position: relative; margin-top: 20px; }
+.spine::before { content: ""; position: absolute; left: 50%; top: 32px; bottom: 0; width: 1px; background: var(--line-2); }
+.spine-head { display: grid; grid-template-columns: 1fr 1fr; font-size: 14px; font-weight: 700; padding-bottom: 10px; }
+.spine-head span { display: flex; align-items: center; gap: 8px; }
+.spine-head span:last-child { justify-content: flex-end; }
+.ev { position: relative; display: grid; grid-template-columns: 1fr 1fr; min-height: 44px; align-items: center; }
+.ev .card { padding: 6px 0; font-size: 16px; line-height: 1.25; }
+.ev.J .card { grid-column: 1; text-align: right; padding-right: 18px; }
+.ev.Y .card { grid-column: 2; padding-left: 18px; }
+.ev .card time, .ev .card .note { display: block; font-size: 13px; color: var(--ink-3); }
+.ev::after { content: ""; position: absolute; left: 50%; top: 50%; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; border-radius: 5px; box-shadow: 0 0 0 3px var(--ground); }
+.ev.J::after { background: var(--jason); } .ev.Y::after { background: var(--yuykhan); }
+.ev.off .what { color: var(--off); font-weight: 700; }
+.marker { display: flex; justify-content: center; margin: 10px 0; position: relative; }
+.marker span { background: var(--ground); padding: 4px 12px; font-size: 13px; font-weight: 700; color: var(--yuykhan); border-radius: 12px; box-shadow: inset 0 0 0 1px var(--yuykhan); }
+
+.drawn-check path { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 260ms cubic-bezier(.23,1,.32,1) forwards; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .drawn-check path { animation: none; stroke-dashoffset: 0; }
+  .k, .toast, .records { transition: none; }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <span class="name">Evie<span>Wed, Oct 7</span></span>
+  <button class="text-btn" id="openRecords">Records</button>
+  <button class="icon-btn" id="night" aria-label="Switch day or night colours">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+  </button>
+</header>
+
+<button class="handoff" id="handoff"></button>
+
+<section class="state" aria-live="polite">
+  <p class="big" id="stateBig"></p>
+  <p class="meta" id="stateMeta"></p>
+</section>
+
+<main class="controls" id="controls" aria-label="Log"></main>
+
+<div class="toast" id="toast" role="status">
+  <div class="toast-top"><span class="msg" id="toastMsg"></span><button id="undo">Undo</button></div>
+  <div class="offsets" id="offsets">
+    <button data-off="0" aria-pressed="true">Now</button>
+    <button data-off="5">5m ago</button>
+    <button data-off="15">15m ago</button>
+    <button data-off="30">30m ago</button>
+  </div>
+</div>
+
+<section class="records" id="records" aria-label="Records">
+  <div class="records-in">
+    <div class="top"><span class="name">Records</span><button class="text-btn" id="closeRecords">Done</button></div>
+    <h1>Today</h1>
+    <p class="sub" id="recSub"></p>
+    <div class="spine" id="spine"></div>
+  </div>
+</section>
+
+<script>window.EVIE_START = new Date(2026, 9, 7, 20, 52, 0);</script>
+<script src="shared.js"></script>
+<script>
+const E = Evie, $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+$('#night').onclick = E.initTheme('evie-log-v1-theme');
+const ME = 'Y', LAST_SEEN = new Date(2026, 9, 7, 15, 27);
+
+// Scene: she woke from her evening nap at 8:44, Jason let her out.
+E.add(20, 44, 'wake', 'J');
+
+// ---------- helpers ----------
+const CHECK = () => E.check(20);
+const short = d => { const { h, m } = E.elapsed(d); return h ? `${h}h ${m}m` : `${m}m`; };
+function clockOf(ms) {
+  const s = Math.max(0, Math.floor(ms / 1000)), h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, x = s % 60;
+  return h ? `${h}:${String(m).padStart(2, '0')}:${String(x).padStart(2, '0')}` : `${m}:${String(x).padStart(2, '0')}`;
+}
+const onTarget = ev => ev.target ? ev.target === 'on' : ev.loc !== 'inside';
+const SESSION_NAME = { sleep: 'Sleep', walk: 'Walk', play: 'Play', training: 'Training', social: 'Socialization' };
+const STEP_NAME = { settling: 'Settling', whining: 'Whining', out: 'Out of crate', asleep: 'Asleep', running: '' };
+
+function describe(ev) {
+  if (ev.type === 'pee' || ev.type === 'poop') {
+    const w = ev.type === 'pee' ? 'Pee' : 'Poop';
+    const amt = ev.amount ? ', ' + ev.amount : '';
+    return onTarget(ev) ? `${w} on target${amt}` : `${w} off target${amt}`;
+  }
+  if (ev.type === 'meal') return 'Meal' + (ev.ate ? ', ' + ev.ate.toLowerCase() : '') + (ev.style === 'onoff' ? ', on and off' : '');
+  if (ev.type === 'session') {
+    return SESSION_NAME[ev.kind] + (ev.end ? ', ' + durText(ev.end - ev.start) : ', in progress');
+  }
+  return E.describe(ev);
+}
+function durText(ms) { const m = Math.round(ms / 60000), h = Math.floor(m / 60); return h ? `${h} hr ${m % 60} min` : `${m} min`; }
+
+const last = pred => E.state().today.filter(pred).pop();
+
+// ---------- state ----------
+let view = 'home';          // home | pee | poop | meal | voice
+let active = null;          // the running session, if any
+let lastLogged = null, toastTimer;
+
+function render() {
+  const s = E.state();
+  // handoff line
+  const theirs = s.today.filter(e => e.by === 'J' && e.t > LAST_SEEN);
+  $('#handoff').hidden = !theirs.length;
+  $('#handoff').innerHTML = `<i class="dot J"></i><span><b>Jason logged ${theirs.length} things</b> since ${E.clock(LAST_SEEN)}</span><span class="go">See</span>`;
+
+  // state line
+  if (active) {
+    $('#stateBig').textContent = active.kind === 'sleep' ? 'Nap in progress' : SESSION_NAME[active.kind] + ' in progress';
+    $('#stateMeta').textContent = 'Started ' + E.clock(active.start) + (active.by !== ME ? ' by Jason' : '') + '. Pee and poop still work.';
+  } else {
+    const woke = last(e => e.type === 'wake' || (e.type === 'session' && e.kind === 'sleep'));
+    const at = woke ? (woke.end || woke.t) : null;
+    $('#stateBig').textContent = !at ? 'Awake' : E.elapsed(at).mins < 1 ? 'Just woke up' : `Awake ${E.ago(at)}`;
+    $('#stateMeta').textContent = at ? `Woke up at ${E.clock(at)}` : '';
+  }
+  renderControls();
+}
+
+function renderControls() {
+  const c = $('#controls');
+  if (view === 'pee') return c.innerHTML = peePanel();
+  if (view === 'poop') return c.innerHTML = poopPanel();
+  if (view === 'meal') return c.innerHTML = mealPanel();
+  if (view === 'voice') return voicePanel(c);
+  if (active) return c.innerHTML = sessionPanel();
+  c.innerHTML = homePanel();
+}
+
+// ---------- panels ----------
+function homePanel() {
+  const s = E.state();
+  const sub = t => { const ev = last(e => e.type === t || (e.type === 'session' && e.kind === t)); return ev ? E.clock(ev.end || ev.t || ev.start) : 'Not yet'; };
+  return `
+  <div class="pair">
+    <button class="k main" data-act="pee">Pee<small>${short(s.pee.t)} ago</small></button>
+    <button class="k main" data-act="poop">Poop<small>${short(s.poop.t)} ago</small></button>
+  </div>
+  <div class="grid3">
+    <button class="k" data-act="meal">Meal<small>${sub('meal')}</small></button>
+    <button class="k" data-act="water">Water<small>${sub('water')}</small></button>
+    <button class="k" data-act="start" data-kind="sleep">Sleep<small>Start nap</small></button>
+    <button class="k" data-act="start" data-kind="walk">Walk<small>${sub('walk')}</small></button>
+    <button class="k" data-act="start" data-kind="play">Play<small>${sub('play')}</small></button>
+    <button class="k" data-act="start" data-kind="training">Training<small>${sub('training')}</small></button>
+    <button class="k" data-act="start" data-kind="social">Socialize<small>${sub('social')}</small></button>
+    <button class="k voice" data-act="voice" aria-label="Log by voice">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+      <span>Say it<small>“She peed on the pad”</small></span>
+    </button>
+  </div>`;
+}
+
+function head(title, q) {
+  return `<div class="panel-head"><h2>${title}<span class="q">${q || ''}</span></h2>
+    <button class="icon-btn" data-act="back" aria-label="Cancel"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>`;
+}
+function peePanel() {
+  const b = (t, a) => `<button class="k tall${t === 'off' ? ' off' : ''}" data-act="logpee" data-target="${t}" data-amount="${a}" aria-label="Pee ${t === 'on' ? 'on' : 'off'} target, ${a}">${a[0].toUpperCase() + a.slice(1)}<small></small></button>`;
+  return `<div class="panel">${head('Pee', 'Where, and how much?')}
+    <div class="rowlabel">On target</div>
+    <div class="grid3">${b('on', 'small')}${b('on', 'medium')}${b('on', 'big')}</div>
+    <div class="rowlabel off">Off target</div>
+    <div class="grid3">${b('off', 'small')}${b('off', 'medium')}${b('off', 'big')}</div></div>`;
+}
+function poopPanel() {
+  return `<div class="panel">${head('Poop', 'Where?')}
+    <div class="pair">
+      <button class="k tall" data-act="logpoop" data-target="on" style="min-height:140px">On target<small>Pad or outside</small></button>
+      <button class="k tall off" data-act="logpoop" data-target="off" style="min-height:140px">Off target<small>Accident</small></button>
+    </div></div>`;
+}
+let mealStyle = 'once';
+function mealPanel() {
+  const b = a => `<button class="k tall" data-act="logmeal" data-ate="${a}">${a}</button>`;
+  return `<div class="panel">${head('Meal', 'How did she eat?')}
+    <div class="seg" role="group" aria-label="How she ate">
+      <button data-act="style" data-style="once" aria-pressed="${mealStyle === 'once'}">All at once</button>
+      <button data-act="style" data-style="onoff" aria-pressed="${mealStyle === 'onoff'}">On and off</button>
+    </div>
+    <div class="rowlabel">How much?</div>
+    <div class="grid3">${b('Finished')}${b('Half left')}${b('Barely ate')}</div></div>`;
+}
+
+function sessionPanel() {
+  const a = active, step = a.steps[a.steps.length - 1];
+  const since = step.t, total = E.now() - a.start;
+  const stepsHtml = a.steps.map(x => `<li><b>${STEP_NAME[x.step] || SESSION_NAME[a.kind]}</b><span>${E.clock(x.t)}${x.note ? ', ' + x.note : ''}</span></li>`).join('');
+  const pp = `<div class="pair"><button class="k" data-act="pee">Pee</button><button class="k" data-act="poop">Poop</button></div>`;
+  let label, actions = '', note = '';
+  if (a.kind === 'sleep') {
+    label = STEP_NAME[step.step];
+    if (step.step === 'settling') actions = `<div class="pair"><button class="k tall" data-act="step" data-step="whining">Whining</button><button class="k tall main" data-act="step" data-step="asleep">Fell asleep</button></div>`;
+    if (step.step === 'whining') actions = `<div class="pair"><button class="k tall" data-act="step" data-step="out">Let her out</button><button class="k tall" data-act="step" data-step="settling">Stopped whining</button></div><button class="k" data-act="step" data-step="asleep">Fell asleep</button>`;
+    if (step.step === 'out') { note = `<textarea id="note" placeholder="What did she do? Type or tap the mic on your keyboard">${a.draft || ''}</textarea>`; actions = `${pp}<button class="k tall main" data-act="step" data-step="settling">Back in crate</button>`; }
+    if (step.step === 'asleep') actions = `<button class="k tall main" data-act="wake" style="min-height:120px">Woke up</button>`;
+  } else {
+    label = SESSION_NAME[a.kind];
+    const ph = { walk: 'Where did you go?', play: 'Anything to note? (optional)', training: 'Which command did you practice?', social: 'What happened, and how did she do?' }[a.kind];
+    note = `<textarea id="note" placeholder="${ph}">${a.draft || ''}</textarea>`;
+    actions = `${pp}<button class="k tall main" data-act="stop">End ${SESSION_NAME[a.kind].toLowerCase()}</button>`;
+  }
+  return `<div class="session">
+      <div class="now"><span class="label"><i class="pulse"></i>${label}</span><span class="hint">${a.kind === 'sleep' ? 'Total <span id="total" data-since="' + a.start.getTime() + '">' + clockOf(total) + '</span>' : 'Since ' + E.clock(a.start)}</span></div>
+      <div class="clock" id="clock" data-since="${(a.kind === 'sleep' ? since : a.start).getTime()}">${clockOf(E.now() - (a.kind === 'sleep' ? since : a.start))}</div>
+      ${a.steps.length > 1 ? `<ul class="steps">${stepsHtml}</ul>` : ''}
+      ${note}
+    </div>
+    ${actions}
+    <div class="pair"><button class="end" data-act="skip">Prototype: skip 10 min</button><button class="end" data-act="cancelSession">Cancel, don’t save</button></div>`;
+}
+
+// Voice: the prototype uses simple word matching. The real app sends the sentence to Claude.
+let heard = null;
+function voicePanel(c) {
+  c.innerHTML = `<div class="panel">${head('Say it', '')}
+    <textarea id="said" placeholder="Tap the mic on your keyboard and talk. “She peed a little next to the pad.”"></textarea>
+    <div id="heardBox"></div>
+    <p class="hint">Prototype: understands simple sentences only. The real app uses Claude for this.</p></div>`;
+  const t = $('#said'); t.focus();
+  t.oninput = () => { heard = parse(t.value); showHeard(); };
+}
+function parse(text) {
+  const x = text.toLowerCase(); if (!x.trim()) return null;
+  const off = /(accident|off target|missed|floor|rug|next to|inside|carpet)/.test(x);
+  const amount = /(a lot|big|huge|long)/.test(x) ? 'big' : /(little|dribble|small|tiny|bit)/.test(x) ? 'small' : 'medium';
+  if (/(pee|peed|wee|potty)/.test(x)) return { type: 'pee', target: off ? 'off' : 'on', amount };
+  if (/(poop|pooped|poo)/.test(x)) return { type: 'poop', target: off ? 'off' : 'on' };
+  if (/(water|drank|drink)/.test(x)) return { type: 'water' };
+  if (/(ate|eat|meal|food|breakfast|dinner|lunch)/.test(x)) return { type: 'meal', ate: /(barely|didn.t|few bites)/.test(x) ? 'Barely ate' : /(half)/.test(x) ? 'Half left' : 'Finished', style: /(on and off|grazed|came back)/.test(x) ? 'onoff' : 'once' };
+  if (/(walk)/.test(x)) return { session: 'walk', note: text };
+  if (/(train|sit|name game|recall)/.test(x)) return { session: 'training', note: text };
+  if (/(lobby|social|met|neighbou?r)/.test(x)) return { session: 'social', note: text };
+  if (/(play|zoomies|toy)/.test(x)) return { session: 'play', note: text };
+  if (/(nap|sleep|crate|bed)/.test(x)) return { session: 'sleep' };
+  return { type: 'note', note: text };
+}
+function showHeard() {
+  const box = $('#heardBox'); if (!heard) return box.innerHTML = '';
+  const what = heard.session ? 'Start ' + SESSION_NAME[heard.session].toLowerCase() : describe({ ...heard, t: E.now() });
+  box.innerHTML = `<div class="heard">Got it as<b>${what}, ${E.clock(E.now())}</b></div>
+    <button class="k main wide" data-act="voicelog" style="min-height:64px;font-size:19px">${heard.session ? 'Start' : 'Log it'}</button>`;
+}
+
+// ---------- actions ----------
+function logEvent(type, fields) {
+  const ev = E.log(type, { by: ME, ...fields });
+  view = 'home'; render(); toast(ev);
+}
+function startSession(kind) {
+  const t = E.now();
+  active = { id: 's' + t.getTime(), type: 'session', kind, start: t, t, by: ME, steps: [{ step: kind === 'sleep' ? 'settling' : 'running', t }] };
+  E.haptic(); view = 'home'; render();
+}
+function endSession() {
+  const a = active; if (a.draft) a.note = a.draft;
+  a.end = E.now(); active = null;
+  const ev = E.log('session', { ...a, t: a.start, by: ME });
+  view = 'home'; render(); toast(ev, sessionSummary(a));
+}
+function sessionSummary(a) {
+  if (a.kind !== 'sleep') return `${SESSION_NAME[a.kind]}, ${durText(a.end - a.start)}`;
+  const asleep = a.steps.find(x => x.step === 'asleep'), whines = a.steps.filter(x => x.step === 'whining').length;
+  const settle = asleep ? durText(asleep.t - a.start) : '';
+  return `Slept ${durText(a.end - (asleep ? asleep.t : a.start))}, took ${settle} to fall asleep${whines ? ', whined ' + (['', 'once', 'twice'][whines] || whines + ' times') : ''}`;
+}
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const act = b.dataset.act;
+  if (act === 'pee' || act === 'poop' || act === 'meal' || act === 'voice') { view = act; return renderControls(); }
+  if (act === 'back') { view = 'home'; return renderControls(); }
+  if (act === 'water') return logEvent('water');
+  if (act === 'logpee' || act === 'logpoop') {
+    b.classList.add('done'); b.querySelector('small').innerHTML = CHECK();
+    const f = { target: b.dataset.target, loc: b.dataset.target === 'off' ? 'inside' : 'pad' };
+    if (act === 'logpee') f.amount = b.dataset.amount;
+    // stays inside a running session if one is active
+    if (active && active.steps.length) active.steps[active.steps.length - 1].note = describe({ type: act.slice(3), ...f }).toLowerCase();
+    return setTimeout(() => logEvent(act.slice(3), f), 380);
+  }
+  if (act === 'style') { mealStyle = b.dataset.style; return renderControls(); }
+  if (act === 'logmeal') { b.classList.add('done'); return setTimeout(() => logEvent('meal', { ate: b.dataset.ate, style: mealStyle }), 380); }
+  if (act === 'start') return startSession(b.dataset.kind);
+  if (act === 'step') {
+    if (active.draft) { active.steps[active.steps.length - 1].note = active.draft; active.draft = ''; }
+    active.steps.push({ step: b.dataset.step, t: E.now() }); E.haptic(); return render();
+  }
+  if (act === 'wake' || act === 'stop') return endSession();
+  if (act === 'skip') { E.skip(10); return render(); }
+  if (act === 'cancelSession') { active = null; return render(); }
+  if (act === 'voicelog') {
+    const h = heard; heard = null;
+    if (h.session) return startSession(h.session);
+    const { type, ...f } = h; if (f.target) f.loc = f.target === 'off' ? 'inside' : 'pad';
+    return logEvent(type, f);
+  }
+});
+
+// ---------- toast ----------
+function toast(ev, text) {
+  lastLogged = ev;
+  const msg = () => `${CHECK()}${text || describe(ev) + ', ' + E.clock(ev.t)}`;
+  $('#toastMsg').innerHTML = msg();
+  $('#offsets').hidden = ev.type === 'session';
+  $$('#offsets button').forEach(b => b.setAttribute('aria-pressed', b.dataset.off === '0'));
+  $('#toast').classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => $('#toast').classList.remove('show'), 6000);
+  $$('#offsets button').forEach(b => b.onclick = () => {
+    E.shift(ev.id, +b.dataset.off);
+    $$('#offsets button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    $('#toastMsg').innerHTML = `${CHECK()}${describe(ev)}, ${E.clock(ev.t)}`;
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => $('#toast').classList.remove('show'), 6000);
+    render();
+  });
+}
+$('#undo').onclick = () => { E.undo(lastLogged.id); $('#toast').classList.remove('show'); render(); };
+
+// ---------- records ----------
+function renderRecords() {
+  const evs = E.state().today.slice().reverse();
+  const pees = evs.filter(e => e.type === 'pee'), off = evs.filter(e => (e.type === 'pee' || e.type === 'poop') && !onTarget(e));
+  $('#recSub').textContent = `${pees.length} pees, ${off.length} off target`;
+  let html = `<div class="spine-head"><span><i class="dot J"></i>Jason</span><span>You<i class="dot Y"></i></span></div>`, marked = false;
+  for (const ev of evs) {
+    if (!marked && ev.t <= LAST_SEEN) { html += `<div class="marker"><span>You looked at ${E.clock(LAST_SEEN)}</span></div>`; marked = true; }
+    const isOff = (ev.type === 'pee' || ev.type === 'poop') && !onTarget(ev);
+    html += `<div class="ev ${ev.by}${isOff ? ' off' : ''}"><div class="card"><time>${E.clock(ev.t)}</time><span class="what">${describe(ev)}</span>${ev.note ? `<span class="note">${ev.note}</span>` : ''}</div></div>`;
+  }
+  $('#spine').innerHTML = html;
+}
+$('#openRecords').onclick = $('#handoff').onclick = () => { renderRecords(); $('#records').classList.add('open'); };
+$('#closeRecords').onclick = () => $('#records').classList.remove('open');
+
+// ---------- clock ----------
+E.subscribe(() => {});
+render();
+document.addEventListener('input', e => { if (e.target.id === 'note' && active) active.draft = e.target.value; });
+setInterval(() => {
+  for (const c of [$('#clock'), $('#total')]) if (c) c.textContent = clockOf(E.now() - +c.dataset.since);
+}, 1000);
+setInterval(() => { if (view === 'home' && !active) render(); }, 30000);
+</script>
+</body>
+</html>

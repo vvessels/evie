@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Evie, Counters</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..800&display=swap" rel="stylesheet">
+<style>
+/* Direction A: Counters. The time-since figures ARE the log keys.
+   Keys have travel: a bottom edge that compresses when pressed. Night mode is red light. */
+:root {
+  --ground: #d9dad5;
+  --key: #eeefea;
+  --key-edge: #b5b7b0;
+  --key-pressed: #e4e5df;
+  --ink: #141514;
+  --ink-2: #4a4c48;
+  --ink-3: #75776f;
+  --hair: rgba(20, 21, 20, 0.12);
+  --signal: #1f45a6;      /* pee-pad blue: the one accent, used for "just logged" */
+  --accident: #9b3d1f;
+  --toast: #141514; --toast-ink: #eeefea;
+  --edge: 6px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #120807; --key: #1f0f0c; --key-edge: #0a0403; --key-pressed: #281410;
+    --ink: #f0a58a; --ink-2: #c47a62; --ink-3: #8a5442; --hair: rgba(240, 165, 138, 0.14);
+    --signal: #ffc29a; --accident: #ff7a52; --toast: #2a1410; --toast-ink: #f0a58a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #120807; --key: #1f0f0c; --key-edge: #0a0403; --key-pressed: #281410;
+  --ink: #f0a58a; --ink-2: #c47a62; --ink-3: #8a5442; --hair: rgba(240, 165, 138, 0.14);
+  --signal: #ffc29a; --accident: #ff7a52; --toast: #2a1410; --toast-ink: #f0a58a; color-scheme: dark;
+}
+
+* { box-sizing: border-box; margin: 0; }
+html { -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
+body {
+  background: var(--ground); color: var(--ink);
+  font-family: Archivo, system-ui, sans-serif; font-variation-settings: "wdth" 100;
+  -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums;
+  max-width: 430px; margin: 0 auto; min-height: 100dvh;
+  padding: env(safe-area-inset-top) 16px calc(env(safe-area-inset-bottom) + 96px);
+}
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+button:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+
+.top { display: flex; align-items: center; justify-content: space-between; height: 56px; }
+.date { font-size: 15px; font-weight: 500; color: var(--ink-2); }
+.night { width: 44px; height: 44px; display: grid; place-items: center; color: var(--ink-2); border-radius: 22px; }
+
+/* State: the one thing that isn't a counter you reset */
+.state { padding: 28px 0 0; min-height: 176px; }
+.state-word { font-size: 64px; line-height: .9; font-weight: 700; letter-spacing: -0.02em;
+  font-variation-settings: "wdth" 62; }
+.state-meta { margin-top: 10px; font-size: 17px; color: var(--ink-2); }
+.state-meta b { font-weight: 600; color: var(--ink); }
+
+/* Keys */
+.keys { display: grid; gap: 10px; margin-top: 8px; }
+.key {
+  position: relative; display: grid; grid-template-columns: 1fr auto; align-items: end;
+  min-height: 92px; padding: 14px 16px 12px; text-align: left; border-radius: 14px;
+  background: var(--key); box-shadow: 0 var(--edge) 0 var(--key-edge), 0 0 0 1px var(--hair);
+  transform: translateY(0); transition: transform 90ms cubic-bezier(.23,1,.32,1), box-shadow 90ms cubic-bezier(.23,1,.32,1);
+  margin-bottom: var(--edge);
+}
+.key:active, .key.down { transform: translateY(4px); box-shadow: 0 2px 0 var(--key-edge), 0 0 0 1px var(--hair); background: var(--key-pressed); }
+.key-name { font-size: 22px; font-weight: 650; letter-spacing: -0.01em; }
+.key-last { font-size: 14px; color: var(--ink-3); margin-top: 4px; }
+.key-count { font-size: 60px; line-height: .82; font-weight: 600; letter-spacing: -0.02em;
+  font-variation-settings: "wdth" 62; display: flex; align-items: baseline; gap: 2px; }
+.key-count .u { font-size: 15px; font-weight: 500; color: var(--ink-3); letter-spacing: 0; margin: 0 6px 0 1px; font-variation-settings: "wdth" 100; }
+.key.fresh .key-count { color: var(--signal); }
+.key.fresh .key-last { color: var(--signal); }
+
+/* Location chooser: replaces the key face in place */
+.where { position: relative; display: none; grid-template-columns: 1fr 1fr 1fr 52px; gap: 8px; min-height: 92px; }
+.where.open { display: grid; }
+.where .key { grid-template-columns: 1fr; align-items: center; justify-items: center; min-height: 92px; padding: 10px 6px; text-align: center; }
+.where .key .key-name { font-size: 19px; }
+.where .key .key-last { font-size: 13px; margin-top: 2px; }
+.where .key.accident .key-name { color: var(--accident); }
+.where .key.done { color: var(--signal); }
+.where .key.cancel { color: var(--ink-3); }
+
+.small { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 4px; }
+.small .key { min-height: 64px; grid-template-columns: 1fr; align-items: center; padding: 10px 12px; }
+.small .key-name { font-size: 17px; }
+.small .key-last { font-size: 12px; margin-top: 2px; }
+
+.more { display: none; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
+.more.open { display: grid; }
+.more .key { min-height: 56px; grid-template-columns: 1fr; align-items: center; justify-items: center; padding: 6px; }
+.more .key-name { font-size: 15px; font-weight: 600; }
+
+/* Timeline: the archival record */
+.log { margin-top: 40px; }
+.log-head { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 10px; border-bottom: 1px solid var(--hair); }
+.log-head h2 { font-size: 15px; font-weight: 600; }
+.log-head span { font-size: 14px; color: var(--ink-3); }
+.row { display: grid; grid-template-columns: 76px 1fr 22px; gap: 8px; align-items: baseline; padding: 11px 0; border-bottom: 1px solid var(--hair); font-size: 16px; }
+.row time { color: var(--ink-3); font-size: 15px; }
+.row .what { color: var(--ink); }
+.row .note { display: block; color: var(--ink-3); font-size: 14px; margin-top: 2px; }
+.row .by { font-size: 12px; font-weight: 600; color: var(--ink-3); width: 22px; height: 22px; border-radius: 11px; display: grid; place-items: center; box-shadow: inset 0 0 0 1px var(--hair); }
+.row.accident .what { color: var(--accident); }
+.row.fresh .what, .row.fresh time { color: var(--signal); }
+
+/* Toast with time offsets */
+.toast { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 12px); width: min(398px, calc(100% - 32px));
+  transform: translate(-50%, 140%); transition: transform 220ms cubic-bezier(.23,1,.32,1);
+  background: var(--toast); color: var(--toast-ink); border-radius: 16px; box-shadow: 0 0 0 1px var(--hair), 0 8px 24px rgba(0,0,0,.18); padding: 12px 12px 10px 16px; }
+.toast.show { transform: translate(-50%, 0); }
+.toast-top { display: flex; align-items: center; gap: 10px; min-height: 32px; }
+.toast-top .msg { flex: 1; font-size: 16px; font-weight: 550; }
+.toast-top button { height: 44px; padding: 0 10px; margin: -6px -4px; font-weight: 650; text-decoration: underline; text-underline-offset: 3px; }
+.offsets { display: flex; gap: 6px; margin-top: 6px; }
+.offsets button { flex: 1; height: 44px; border-radius: 10px; font-size: 14px; font-weight: 550; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--toast-ink) 30%, transparent); }
+.offsets button[aria-pressed="true"] { background: var(--toast-ink); color: var(--toast); box-shadow: none; }
+
+.drawn-check path { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 260ms cubic-bezier(.23,1,.32,1) forwards; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .drawn-check path { animation: none; stroke-dashoffset: 0; }
+  .key, .toast { transition: none; }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <span class="date">Wednesday, Oct 7</span>
+  <button class="night" id="night" aria-label="Switch day or night colours">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+  </button>
+</header>
+
+<section class="state" aria-live="polite">
+  <div class="state-word" id="stateWord"></div>
+  <p class="state-meta" id="stateMeta"></p>
+</section>
+
+<section class="keys" aria-label="Log">
+  <button class="key" data-k="pee"><div><div class="key-name">Pee</div><div class="key-last" data-last="pee"></div></div><div class="key-count" data-count="pee"></div></button>
+  <div class="where" data-where="pee"></div>
+  <button class="key" data-k="poop"><div><div class="key-name">Poop</div><div class="key-last" data-last="poop"></div></div><div class="key-count" data-count="poop"></div></button>
+  <div class="where" data-where="poop"></div>
+  <button class="key" data-k="meal"><div><div class="key-name">Meal</div><div class="key-last" data-last="meal"></div></div><div class="key-count" data-count="meal"></div></button>
+  <div class="small">
+    <button class="key" data-k="sleep"><div class="key-name" id="sleepName"></div><div class="key-last" id="sleepLast"></div></button>
+    <button class="key" data-k="crate"><div class="key-name" id="crateName"></div><div class="key-last" id="crateLast"></div></button>
+    <button class="key" data-k="more" aria-expanded="false"><div class="key-name">More</div><div class="key-last">Water, walk…</div></button>
+  </div>
+  <div class="more" id="more"></div>
+</section>
+
+<section class="log">
+  <div class="log-head"><h2>Today</h2><span id="count"></span></div>
+  <div id="rows"></div>
+</section>
+
+<div class="toast" id="toast" role="status">
+  <div class="toast-top"><span class="msg" id="toastMsg"></span><button id="undo">Undo</button></div>
+  <div class="offsets" id="offsets">
+    <button data-off="0" aria-pressed="true">Now</button>
+    <button data-off="5">5m ago</button>
+    <button data-off="15">15m ago</button>
+    <button data-off="30">30m ago</button>
+  </div>
+</div>
+
+<script src="shared.js"></script>
+<script>
+const E = Evie, $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+$('#night').onclick = E.initTheme('evie-a-theme');
+
+let open = null, lastLogged = null, toastTimer;
+
+function count(ev) {
+  if (!ev) return '<span class="u">none yet</span>';
+  const { h, m } = E.elapsed(ev.t);
+  return h + '<span class="u">h</span>' + String(m).padStart(2, '0') + '<span class="u">m</span>';
+}
+function lastLine(ev) {
+  if (!ev) return '';
+  const where = ev.loc ? ', ' + (ev.loc === 'inside' ? 'accident' : ev.loc) : '';
+  return 'Last ' + E.clock(ev.t) + where;
+}
+
+function render() {
+  const s = E.state();
+  // State
+  if (s.asleep) {
+    $('#stateWord').textContent = s.crated ? 'Asleep, in crate' : 'Asleep';
+    $('#stateMeta').innerHTML = 'For <b>' + E.ago(s.asleep.t) + '</b>, since ' + E.clock(s.asleep.t);
+  } else {
+    $('#stateWord').textContent = s.crated ? 'Awake, in crate' : 'Awake';
+    $('#stateMeta').innerHTML = s.awakeSince ? 'For <b>' + E.ago(s.awakeSince.t) + '</b>, since ' + E.clock(s.awakeSince.t) : '';
+  }
+  for (const k of ['pee', 'poop', 'meal']) {
+    $(`[data-count="${k}"]`).innerHTML = count(s[k]);
+    $(`[data-last="${k}"]`).textContent = lastLine(s[k]);
+    $(`[data-k="${k}"]`).classList.toggle('fresh', !!(s[k] && s[k].fresh));
+  }
+  $('#sleepName').textContent = s.asleep ? 'Woke up' : 'Asleep';
+  $('#sleepLast').textContent = s.asleep ? 'Ends nap' : 'Starts nap';
+  $('#crateName').textContent = s.crated ? 'Out of crate' : 'In crate';
+  $('#crateLast').textContent = s.crated ? 'In ' + E.ago(s.crated.t) : 'Door closed';
+
+  // Timeline, newest first
+  const evs = s.today.slice().reverse();
+  $('#count').textContent = evs.filter(x => x.type === 'pee').length + ' pees, ' + evs.filter(x => x.loc === 'inside').length + ' accidents';
+  $('#rows').innerHTML = evs.map(ev => `
+    <div class="row${ev.loc === 'inside' ? ' accident' : ''}${ev.fresh ? ' fresh' : ''}">
+      <time>${E.clock(ev.t)}</time>
+      <span class="what">${E.describe(ev)}${ev.note ? `<span class="note">${ev.note}</span>` : ''}</span>
+      <span class="by" title="${E.PEOPLE[ev.by].name}">${ev.by}</span>
+    </div>`).join('');
+}
+
+function openWhere(k) {
+  closeWhere();
+  open = k;
+  const s = E.state();
+  const box = $(`[data-where="${k}"]`);
+  const word = k === 'pee' ? 'Pee' : 'Poop';
+  box.innerHTML = `
+    <button class="key" data-loc="pad"><div class="key-name">Pad</div><div class="key-last">${word}</div></button>
+    <button class="key" data-loc="outside"><div class="key-name">Outside</div><div class="key-last">${word}</div></button>
+    <button class="key accident" data-loc="inside"><div class="key-name">Inside</div><div class="key-last">Accident</div></button>
+    <button class="key cancel" data-cancel aria-label="Cancel"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>`;
+  $(`[data-k="${k}"]`).style.display = 'none';
+  box.classList.add('open');
+  $('[data-cancel]', box).onclick = closeWhere;
+  $$('[data-loc]', box).forEach(b => b.onclick = () => {
+    b.classList.add('done');
+    b.querySelector('.key-last').innerHTML = E.check(22);
+    const ev = E.log(k, { loc: b.dataset.loc });
+    showToast(ev);
+    setTimeout(closeWhere, 420);
+  });
+}
+function closeWhere() {
+  if (!open) return;
+  $(`[data-where="${open}"]`).classList.remove('open');
+  $(`[data-k="${open}"]`).style.display = '';
+  open = null;
+}
+
+function showToast(ev) {
+  lastLogged = ev;
+  $('#toastMsg').textContent = E.describe(ev) + ', ' + E.clock(ev.t);
+  $$('#offsets button').forEach(b => b.setAttribute('aria-pressed', b.dataset.off === '0'));
+  $('#toast').classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => $('#toast').classList.remove('show'), 6000);
+}
+$('#undo').onclick = () => { E.undo(lastLogged.id); $('#toast').classList.remove('show'); };
+$$('#offsets button').forEach(b => b.onclick = () => {
+  E.shift(lastLogged.id, +b.dataset.off);
+  $$('#offsets button').forEach(x => x.setAttribute('aria-pressed', x === b));
+  $('#toastMsg').textContent = E.describe(lastLogged) + ', ' + E.clock(lastLogged.t);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => $('#toast').classList.remove('show'), 6000);
+});
+
+$$('.keys > .key, .small .key').forEach(b => b.onclick = () => {
+  const k = b.dataset.k;
+  if (k === 'pee' || k === 'poop') return openWhere(k);
+  closeWhere();
+  if (k === 'meal') return showToast(E.log('meal', { amount: '3 tbsp' }));
+  if (k === 'sleep') return showToast(E.log(E.state().asleep ? 'wake' : 'sleep', { nap: true }));
+  if (k === 'crate') return showToast(E.log(E.state().crated ? 'uncrate' : 'crate'));
+  if (k === 'more') {
+    const m = $('#more'), on = !m.classList.contains('open');
+    m.classList.toggle('open', on); b.setAttribute('aria-expanded', on);
+  }
+});
+$('#more').innerHTML = ['water', 'walk', 'play', 'training', 'meds', 'weight', 'vet', 'note']
+  .map(t => `<button class="key" data-t="${t}"><span class="key-name">${E.LABEL[t]}</span></button>`).join('');
+$$('#more .key').forEach(b => b.onclick = () => { showToast(E.log(b.dataset.t)); $('#more').classList.remove('open'); });
+
+E.subscribe(render);
+render();
+setInterval(render, 1000 * 15);
+</script>
+</body>
+</html>

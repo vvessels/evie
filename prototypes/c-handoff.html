@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Evie, Handoff</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@300..800&display=swap" rel="stylesheet">
+<style>
+/* Direction C: Handoff. Two people trading shifts. The screen opens on what the other
+   person logged while you were away; the timeline has a spine, one side each.
+   Viewed here as Yuykhan. The log keys are docked to the bottom edge, always in reach. */
+:root {
+  --ground: #f2f2ef;
+  --surface: #ffffff;
+  --ink: #17191c;
+  --ink-2: #4a4e55;
+  --ink-3: #676b74;
+  --line: rgba(23, 25, 28, 0.10);
+  --line-2: rgba(23, 25, 28, 0.20);
+  --jason: #4c6884;     /* slate */
+  --yuykhan: #8a5a24;   /* Evie's cream patch, deepened to read as ink */
+  --accident: #b23a2a;
+  --dock: rgba(242, 242, 239, 0.92);
+  --key: #17191c; --key-ink: #f2f2ef;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #151413; --surface: #1f1d1b; --ink: #ece8e2; --ink-2: #b9b3aa; --ink-3: #938c83;
+    --line: rgba(236, 232, 226, 0.09); --line-2: rgba(236, 232, 226, 0.18);
+    --jason: #95afc8; --yuykhan: #d8a96d; --accident: #e2826f; --dock: rgba(21, 20, 19, 0.92); --key: #2e2a26; --key-ink: #ece8e2; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #151413; --surface: #1f1d1b; --ink: #ece8e2; --ink-2: #b9b3aa; --ink-3: #938c83;
+  --line: rgba(236, 232, 226, 0.09); --line-2: rgba(236, 232, 226, 0.18);
+  --jason: #95afc8; --yuykhan: #d8a96d; --accident: #e2826f; --dock: rgba(21, 20, 19, 0.92); --key: #2e2a26; --key-ink: #ece8e2; color-scheme: dark;
+}
+
+* { box-sizing: border-box; margin: 0; }
+html { -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
+body {
+  background: var(--ground); color: var(--ink);
+  font-family: "Atkinson Hyperlegible Next", system-ui, sans-serif; font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased; max-width: 430px; margin: 0 auto; min-height: 100dvh;
+  padding: env(safe-area-inset-top) 16px calc(env(safe-area-inset-bottom) + 236px);
+}
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+.top { display: flex; align-items: center; justify-content: space-between; height: 56px; }
+.date { font-size: 16px; font-weight: 600; }
+.date span { font-weight: 400; color: var(--ink-3); }
+.night { width: 44px; height: 44px; display: grid; place-items: center; color: var(--ink-2); }
+
+/* Handoff note */
+.handoff { margin-top: 8px; padding: 18px 18px 8px; border-radius: 18px; background: var(--surface); box-shadow: 0 0 0 1px var(--line); }
+.handoff .who { display: flex; align-items: center; gap: 10px; font-size: 15px; color: var(--ink-3); }
+.dot { width: 10px; height: 10px; border-radius: 5px; flex: none; }
+.dot.J { background: var(--jason); } .dot.Y { background: var(--yuykhan); }
+.handoff h1 { margin-top: 10px; font-size: 26px; line-height: 1.15; font-weight: 700; letter-spacing: -0.01em; text-wrap: balance; }
+.handoff ul { list-style: none; padding: 0; margin-top: 12px; }
+.handoff li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); font-size: 17px; }
+.handoff li span:last-child { color: var(--ink-3); }
+.handoff li.accident span:first-child { color: var(--accident); }
+.handoff .ok { width: 100%; height: 48px; margin-top: 4px; font-size: 16px; font-weight: 700; color: var(--ink-2); border-top: 1px solid var(--line); }
+.handoff.read { display: none; }
+
+/* Since lines */
+.since { margin-top: 22px; }
+.since-row { display: flex; align-items: baseline; justify-content: space-between; padding: 10px 2px; border-bottom: 1px solid var(--line); }
+.since-row .k { font-size: 17px; color: var(--ink-2); }
+.since-row .v { font-size: 30px; font-weight: 700; letter-spacing: -0.015em; }
+.since-row .v small { font-size: 15px; font-weight: 500; color: var(--ink-3); letter-spacing: 0; margin-left: 4px; }
+.since-row.state .v { font-size: 22px; }
+
+/* Spine timeline */
+.spine { position: relative; margin-top: 30px; }
+.spine::before { content: ""; position: absolute; left: 50%; top: 34px; bottom: 0; width: 1px; background: var(--line-2); }
+.spine-head { display: grid; grid-template-columns: 1fr 1fr; font-size: 14px; font-weight: 600; padding-bottom: 12px; }
+.spine-head span { display: flex; align-items: center; gap: 8px; }
+.spine-head span:last-child { justify-content: flex-end; }
+.ev { position: relative; display: grid; grid-template-columns: 1fr 1fr; min-height: 44px; align-items: center; }
+.ev .card { padding: 6px 0; font-size: 16px; line-height: 1.25; }
+.ev.J .card { grid-column: 1; text-align: right; padding-right: 18px; }
+.ev.Y .card { grid-column: 2; padding-left: 18px; }
+.ev .card time { display: block; font-size: 13px; color: var(--ink-3); }
+.ev .card .note { display: block; font-size: 13px; color: var(--ink-3); }
+.ev::after { content: ""; position: absolute; left: 50%; top: 50%; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; border-radius: 5px; box-shadow: 0 0 0 3px var(--ground); }
+.ev.J::after { background: var(--jason); } .ev.Y::after { background: var(--yuykhan); }
+.ev.accident .what { color: var(--accident); font-weight: 600; }
+.ev.fresh .what { font-weight: 700; }
+.marker { position: relative; display: flex; justify-content: center; margin: 10px 0; }
+.marker span { position: relative; background: var(--ground); padding: 4px 12px; font-size: 13px; font-weight: 600; color: var(--yuykhan); border-radius: 12px; box-shadow: inset 0 0 0 1px var(--yuykhan); }
+
+/* Dock */
+.dock { position: fixed; left: 0; right: 0; bottom: 0; padding: 10px 16px calc(env(safe-area-inset-bottom) + 12px);
+  background: var(--dock); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); box-shadow: 0 -1px 0 var(--line); }
+.dock-in { max-width: 398px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pad { min-height: 76px; border-radius: 16px; background: var(--surface); box-shadow: 0 0 0 1px var(--line-2), 0 1px 2px rgba(0,0,0,.05);
+  font-size: 22px; font-weight: 700; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  transition: transform 120ms cubic-bezier(.23,1,.32,1); }
+.pad:active { transform: scale(0.97); }
+.pad small { font-size: 13px; font-weight: 500; color: var(--ink-3); }
+.pad.primary { background: var(--key); color: var(--key-ink); box-shadow: none; }
+.pad.primary small { color: color-mix(in srgb, var(--key-ink) 65%, transparent); }
+.row4 { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.row4 .pad { min-height: 56px; font-size: 15px; }
+.where { grid-column: 1 / -1; display: none; grid-template-columns: 1fr 1fr 1fr 52px; gap: 8px; }
+.where.open { display: grid; }
+.where .pad { min-height: 76px; font-size: 19px; }
+.where .pad.accident { color: var(--accident); }
+.where .pad.done { background: var(--ink); color: var(--ground); }
+.more { grid-column: 1 / -1; display: none; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.more.open { display: grid; }
+.more .pad { min-height: 48px; font-size: 14px; }
+
+/* Toast sits above the dock */
+.toast { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 172px); width: min(398px, calc(100% - 32px));
+  transform: translate(-50%, 12px); opacity: 0; pointer-events: none;
+  transition: transform 200ms cubic-bezier(.23,1,.32,1), opacity 200ms cubic-bezier(.23,1,.32,1);
+  background: var(--surface); border-radius: 16px; padding: 10px 12px 10px 16px; box-shadow: 0 0 0 1px var(--line-2), 0 10px 30px rgba(0,0,0,.12); }
+.toast.show { transform: translate(-50%, 0); opacity: 1; pointer-events: auto; }
+.toast-top { display: flex; align-items: center; gap: 10px; min-height: 34px; }
+.toast-top .msg { flex: 1; font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.toast-top button { height: 44px; padding: 0 8px; margin: -5px -4px; font-weight: 700; color: var(--yuykhan); }
+.offsets { display: flex; gap: 6px; margin-top: 4px; }
+.offsets button { flex: 1; height: 44px; border-radius: 10px; font-size: 14px; font-weight: 600; box-shadow: inset 0 0 0 1px var(--line-2); }
+.offsets button[aria-pressed="true"] { background: var(--ink); color: var(--ground); box-shadow: none; }
+
+.drawn-check path { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 260ms cubic-bezier(.23,1,.32,1) forwards; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .drawn-check path { animation: none; stroke-dashoffset: 0; }
+  .pad, .toast { transition: none; }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <span class="date">Evie <span>Wednesday, Oct 7</span></span>
+  <button class="night" id="night" aria-label="Switch day or night colours">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+  </button>
+</header>
+
+<section class="handoff" id="handoff" aria-live="polite"></section>
+
+<section class="since" id="since" aria-label="Time since"></section>
+
+<section class="spine" id="spine" aria-label="Today"></section>
+
+<div class="toast" id="toast" role="status">
+  <div class="toast-top"><span class="msg" id="toastMsg"></span><button id="undo">Undo</button></div>
+  <div class="offsets" id="offsets">
+    <button data-off="0" aria-pressed="true">Now</button>
+    <button data-off="5">5m ago</button>
+    <button data-off="15">15m ago</button>
+    <button data-off="30">30m ago</button>
+  </div>
+</div>
+
+<nav class="dock" aria-label="Log">
+  <div class="dock-in">
+    <button class="pad primary" data-k="pee">Pee<small data-sub="pee"></small></button>
+    <button class="pad primary" data-k="poop">Poop<small data-sub="poop"></small></button>
+    <div class="where" id="where"></div>
+    <div class="row4">
+      <button class="pad" data-k="meal">Meal</button>
+      <button class="pad" data-k="sleep" id="sleepBtn"></button>
+      <button class="pad" data-k="crate" id="crateBtn"></button>
+      <button class="pad" data-k="more" aria-expanded="false">More</button>
+    </div>
+    <div class="more" id="more"></div>
+  </div>
+</nav>
+
+<script src="shared.js"></script>
+<script>
+const E = Evie, $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+$('#night').onclick = E.initTheme('evie-c-theme');
+const ME = 'Y', OTHER = 'J';
+const LAST_SEEN = new Date(2026, 9, 7, 15, 27);
+let lastLogged = null, toastTimer, read = false;
+
+function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
+function handoff(s) {
+  const theirs = s.today.filter(e => e.by === OTHER && e.t > LAST_SEEN);
+  const box = $('#handoff');
+  if (read || !theirs.length) { box.classList.add('read'); return; }
+  const pads = theirs.filter(e => e.type === 'pee' && e.loc !== 'inside').length;
+  const acc = theirs.filter(e => e.loc === 'inside').length;
+  const poops = theirs.filter(e => e.type === 'poop').length;
+  const meal = theirs.filter(e => e.type === 'meal').pop();
+  const walk = theirs.find(e => e.type === 'walk');
+  const items = [];
+  if (pads) items.push([plural(pads, 'pee', 'pees') + ' on the pad', 'last ' + E.clock(theirs.filter(e => e.type === 'pee').pop().t)]);
+  if (acc) items.push([plural(acc, 'accident', 'accidents'), '', 'accident']);
+  else items.push(['No accidents', '']);
+  if (poops) items.push([plural(poops, 'poop', 'poops'), E.clock(theirs.filter(e => e.type === 'poop').pop().t)]);
+  if (meal) items.push(['Dinner', E.clock(meal.t)]);
+  if (walk) items.push(['Outside', E.clock(walk.t) + ', 26 min']);
+  box.innerHTML = `
+    <div class="who"><i class="dot J"></i>Since you checked at ${E.clock(LAST_SEEN)}</div>
+    <h1>${s.asleep ? 'She’s asleep. ' : ''}Jason logged ${plural(theirs.length, 'thing', 'things')} while you were away.</h1>
+    <ul>${items.map(([a, b, c]) => `<li${c ? ` class="${c}"` : ''}><span>${a}</span><span>${b}</span></li>`).join('')}</ul>
+    <button class="ok" id="ok">Got it</button>`;
+  $('#ok').onclick = () => { read = true; render(); };
+}
+
+function since(s) {
+  const f = ev => { const { h, m } = E.elapsed(ev.t); return (h ? h + '<small>h</small> ' : '') + m + '<small>m ago</small>'; };
+  const state = s.asleep ? ['Asleep', E.ago(s.asleep.t) + (s.crated ? ', in crate' : '')] : ['Awake', s.awakeSince ? E.ago(s.awakeSince.t) : ''];
+  $('#since').innerHTML = `
+    <div class="since-row"><span class="k">Last pee</span><span class="v">${f(s.pee)}</span></div>
+    <div class="since-row"><span class="k">Last poop</span><span class="v">${f(s.poop)}</span></div>
+    <div class="since-row"><span class="k">Last meal</span><span class="v">${f(s.meal)}</span></div>
+    <div class="since-row state"><span class="k">${state[0]}</span><span class="v">${state[1]}</span></div>`;
+}
+
+function spine(s) {
+  const evs = s.today.slice().reverse();
+  let html = `<div class="spine-head"><span><i class="dot J"></i>Jason</span><span>You<i class="dot Y"></i></span></div>`;
+  let marked = false;
+  for (const ev of evs) {
+    if (!marked && ev.t <= LAST_SEEN) { html += `<div class="marker"><span>You checked at ${E.clock(LAST_SEEN)}</span></div>`; marked = true; }
+    html += `<div class="ev ${ev.by}${ev.loc === 'inside' ? ' accident' : ''}${ev.fresh ? ' fresh' : ''}"><div class="card">
+      <time>${E.clock(ev.t)}</time><span class="what">${E.describe(ev)}</span>${ev.note ? `<span class="note">${ev.note}</span>` : ''}</div></div>`;
+  }
+  $('#spine').innerHTML = html;
+}
+
+function render() {
+  const s = E.state();
+  handoff(s); since(s); spine(s);
+  $('[data-sub="pee"]').textContent = 'Last ' + E.clock(s.pee.t);
+  $('[data-sub="poop"]').textContent = 'Last ' + E.clock(s.poop.t);
+  $('#sleepBtn').textContent = s.asleep ? 'Woke up' : 'Asleep';
+  $('#crateBtn').textContent = s.crated ? 'Out of crate' : 'In crate';
+}
+
+function openWhere(k) {
+  const word = k === 'pee' ? 'Pee' : 'Poop', box = $('#where');
+  box.innerHTML = `
+    <button class="pad" data-loc="pad">Pad<small>${word}</small></button>
+    <button class="pad" data-loc="outside">Outside<small>${word}</small></button>
+    <button class="pad accident" data-loc="inside">Inside<small>Accident</small></button>
+    <button class="pad" data-cancel aria-label="Cancel"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>`;
+  $$('[data-k="pee"],[data-k="poop"]').forEach(b => b.style.display = 'none');
+  box.classList.add('open');
+  $('[data-cancel]', box).onclick = closeWhere;
+  $$('[data-loc]', box).forEach(b => b.onclick = () => {
+    b.classList.add('done'); b.querySelector('small').innerHTML = E.check(18);
+    logged(E.log(k, { loc: b.dataset.loc, by: ME }));
+    setTimeout(closeWhere, 420);
+  });
+}
+function closeWhere() { $('#where').classList.remove('open'); $$('[data-k="pee"],[data-k="poop"]').forEach(b => b.style.display = ''); }
+
+function logged(ev) {
+  lastLogged = ev;
+  $('#toastMsg').innerHTML = `<i class="dot Y"></i>${E.describe(ev)}, ${E.clock(ev.t)}`;
+  $$('#offsets button').forEach(b => b.setAttribute('aria-pressed', b.dataset.off === '0'));
+  $('#toast').classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => $('#toast').classList.remove('show'), 6000);
+}
+$('#undo').onclick = () => { E.undo(lastLogged.id); $('#toast').classList.remove('show'); };
+$$('#offsets button').forEach(b => b.onclick = () => {
+  E.shift(lastLogged.id, +b.dataset.off);
+  $$('#offsets button').forEach(x => x.setAttribute('aria-pressed', x === b));
+  $('#toastMsg').innerHTML = `<i class="dot Y"></i>${E.describe(lastLogged)}, ${E.clock(lastLogged.t)}`;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => $('#toast').classList.remove('show'), 6000);
+});
+
+$$('.dock [data-k]').forEach(b => b.onclick = () => {
+  const k = b.dataset.k;
+  if (k === 'pee' || k === 'poop') return openWhere(k);
+  if (k === 'meal') return logged(E.log('meal', { amount: '3 tbsp', by: ME }));
+  if (k === 'sleep') return logged(E.log(E.state().asleep ? 'wake' : 'sleep', { nap: true, by: ME }));
+  if (k === 'crate') return logged(E.log(E.state().crated ? 'uncrate' : 'crate', { by: ME }));
+  if (k === 'more') { const m = $('#more'), on = !m.classList.contains('open'); m.classList.toggle('open', on); b.setAttribute('aria-expanded', on); }
+});
+$('#more').innerHTML = ['water', 'walk', 'play', 'training', 'meds', 'weight', 'vet', 'note']
+  .map(t => `<button class="pad" data-t="${t}">${E.LABEL[t]}</button>`).join('');
+$$('#more .pad').forEach(b => b.onclick = () => { logged(E.log(b.dataset.t, { by: ME })); $('#more').classList.remove('open'); });
+
+E.subscribe(render);
+render();
+setInterval(render, 15000);
+</script>
+</body>
+</html>

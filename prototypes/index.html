@@ -1,0 +1,79 @@
+<title>Evie Now Screens</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..700&display=swap" rel="stylesheet">
+<style>
+/* Layout: three real-width phones side by side on desktop; stacked links on a phone. */
+:root {
+  --bg: #e6e7e3; --fg: #181917; --muted: #686a64; --line: rgba(24,25,23,.14); --frame: #181917;
+  --face: Archivo, system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #141513; --fg: #e9e9e4; --muted: #94968f; --line: rgba(233,233,228,.14); --frame: #050505; color-scheme: dark; } }
+:root[data-theme="dark"] { --bg: #141513; --fg: #e9e9e4; --muted: #94968f; --line: rgba(233,233,228,.14); --frame: #050505; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font-family: var(--face); -webkit-font-smoothing: antialiased; padding: 32px 16px 56px; }
+main { max-width: 1260px; margin: 0 auto; }
+h1 { font-size: 36px; font-weight: 700; letter-spacing: -0.02em; font-variation-settings: "wdth" 75; text-wrap: balance; }
+.intro { margin-top: 10px; max-width: 62ch; font-size: 16px; line-height: 1.5; color: var(--muted); }
+.intro b { color: var(--fg); font-weight: 600; }
+.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; margin-top: 36px; }
+.opt { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+.phone { width: 100%; max-width: 390px; aspect-ratio: 390 / 844; border-radius: 44px; padding: 10px; background: var(--frame); margin: 0 auto; }
+.phone iframe { width: 100%; height: 100%; border: 0; border-radius: 34px; display: block; background: #fff; }
+.opt h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+.opt h2 span { font-weight: 400; color: var(--muted); }
+.opt p { font-size: 15px; line-height: 1.5; color: var(--muted); }
+.opt a { color: var(--fg); font-weight: 600; text-underline-offset: 3px; }
+.grid.one { grid-template-columns: minmax(0, 420px); }
+.open { display: none; }
+@media (max-width: 900px) {
+  .grid { grid-template-columns: 1fr; gap: 36px; }
+  .phone { display: none; }
+  .open { display: inline-flex; align-items: center; min-height: 48px; padding: 0 18px; border-radius: 12px; box-shadow: inset 0 0 0 1px var(--line); text-decoration: none; align-self: flex-start; }
+}
+</style>
+<main>
+  <h1>Evie: the logging screen</h1>
+  <p class="intro"><b>Current: Log</b>, Yuykhan's pick, made with Codex in direction C's look. Seen as Yuykhan at 8:52 PM on October 7, with Evie's real log. Try: Pee then a size, Sleep then Whining, Let her out, Back in crate, Fell asleep, Woke up. Use "skip 10 min" to fast-forward a nap. Say it understands simple sentences in this prototype only.</p>
+  <div class="grid one">
+    <section class="opt">
+      <div class="phone"><iframe src="log.html" title="Evie Log, current" loading="lazy"></iframe></div>
+      <h2>Log <span>current</span></h2>
+      <p>Pee and Poop pinned to the bottom edge in every state, so your thumb learns one spot. Everything else in equal keys above, voice on the home screen. Records is one tap away, top right.</p>
+      <a class="open" href="log.html">Open Log full screen</a>
+    </section>
+  </div>
+  <h1 style="margin-top:56px;font-size:24px">Earlier directions</h1>
+  <p class="intro">The three looks you chose between (C won on colour, type and feel), then the first Log layout and Codex's second alternative.</p>
+  <div class="grid">
+    <section class="opt">
+      <div class="phone"><iframe src="a-counters.html" title="Direction A, Counters" loading="lazy"></iframe></div>
+      <h2>A <span>Counters</span></h2>
+      <p>The time since her last pee, poop and meal are the buttons. Tap one to log it and the counter rolls back to zero. Keys press down like real keys. Night colours are red light, the dimmest thing to look at at 3am.</p>
+      <a class="open" href="a-counters.html">Open A full screen</a>
+    </section>
+    <section class="opt">
+      <div class="phone"><iframe src="b-daybook.html" title="Direction B, Daybook" loading="lazy"></iframe></div>
+      <h2>B <span>Daybook</span></h2>
+      <p>Pee-pad white and its blue edging. The top is a written sentence. A ruler shows her whole day, midnight to midnight: naps as shaded bands, pees as ticks, accidents in rust, so the after-nap pattern is visible at a glance.</p>
+      <a class="open" href="b-daybook.html">Open B full screen</a>
+    </section>
+    <section class="opt">
+      <div class="phone"><iframe src="c-handoff.html" title="Direction C, Handoff" loading="lazy"></iframe></div>
+      <h2>C <span>Handoff</span></h2>
+      <p>Seen as Yuykhan. Opens on what Jason logged since she last looked. The timeline has a spine, Jason on the left, Yuykhan on the right. Log buttons are pinned to the bottom edge so they're always in reach.</p>
+      <a class="open" href="c-handoff.html">Open C full screen</a>
+    </section>
+    <section class="opt">
+      <div class="phone"><iframe src="log-v1.html" title="Log, first version" loading="lazy"></iframe></div>
+      <h2>Log v1 <span>first layout</span></h2>
+      <p>Pee and Poop on top, flows opening where they were. Replaced by the bottom-pinned layout.</p>
+      <a class="open" href="log-v1.html">Open Log v1 full screen</a>
+    </section>
+    <section class="opt">
+      <div class="phone"><iframe src="codex-2.html" title="Codex alternative 2" loading="lazy"></iframe></div>
+      <h2>Alternative 2 <span>Codex</span></h2>
+      <p>Pee and Poop above a two-column list, with the sleep loop's history kept on screen.</p>
+      <a class="open" href="codex-2.html">Open alternative 2 full screen</a>
+    </section>
+  </div>
+</main>
