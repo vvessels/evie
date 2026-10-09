@@ -2,6 +2,18 @@
 
 Updated at the end of every build session by whoever ran it.
 
+## 2026-10-09 (Jason, Claude): fresh public repo
+
+- The repo is now **public** at `vvessels/evie`, started fresh from one commit so no personal
+  email addresses are in its history. The old private repo is `vvessels/evie-archive` (full
+  history and pull requests #1 to #3).
+- Commits use GitHub noreply emails. Jason and Yuykhan both turned on "Keep my email addresses
+  private" and "Block command line pushes that expose my email" in GitHub settings.
+- Vercel and Supabase are reconnected to the new repo. Vercel's Root Directory is `prototypes`
+  until phase 1 adds the app; then switch it to `./`.
+- **Phase 1 builder: Yuykhan in Claude Code; Codex reviews.** (Either can take over, see
+  AGENTS.md.)
+
 ## 2026-10-09 (Jason, Claude): layout picked, repo going public
 
 - Yuykhan made two alternatives with Codex (PR #2). **She picked alternative 1.** It is now
