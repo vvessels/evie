@@ -1,0 +1,175 @@
+/* Tokens, type and motion from DESIGN.md. Reference build: prototypes/log.html. */
+:root {
+  --ground: #f2f2ef;
+  --surface: #ffffff;
+  --ink: #17191c;
+  --ink-2: #4a4e55;
+  --ink-3: #676b74;
+  --line: rgba(23, 25, 28, 0.10);
+  --line-2: rgba(23, 25, 28, 0.20);
+  --key: #17191c;
+  --key-ink: #f2f2ef;
+  --jason: #4c6884;
+  --yuykhan: #8a5a24;
+  --off: #b23a2a;
+  --ease: cubic-bezier(.23, 1, .32, 1);
+  --ring: 0 0 0 1px var(--line-2), 0 1px 2px rgba(0, 0, 0, .05);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #151413; --surface: #1f1d1b; --ink: #ece8e2; --ink-2: #b9b3aa; --ink-3: #938c83;
+    --line: rgba(236, 232, 226, 0.09); --line-2: rgba(236, 232, 226, 0.18);
+    --key: #2e2a26; --key-ink: #ece8e2; --jason: #95afc8; --yuykhan: #d8a96d; --off: #e2826f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #151413; --surface: #1f1d1b; --ink: #ece8e2; --ink-2: #b9b3aa; --ink-3: #938c83;
+  --line: rgba(236, 232, 226, 0.09); --line-2: rgba(236, 232, 226, 0.18);
+  --key: #2e2a26; --key-ink: #ece8e2; --jason: #95afc8; --yuykhan: #d8a96d; --off: #e2826f;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; margin: 0; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; background: var(--ground); }
+body {
+  background: var(--ground); color: var(--ink);
+  font-family: var(--font-atkinson), system-ui, sans-serif; font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+button:focus-visible, textarea:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+.app {
+  max-width: 430px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column;
+  padding: env(safe-area-inset-top) 16px calc(env(safe-area-inset-bottom) + 16px);
+}
+
+/* Top: quiet */
+.top { display: flex; align-items: center; height: 56px; gap: 4px; }
+.top .name { font-size: 17px; font-weight: 700; flex: 1; }
+.top .name span { font-weight: 500; color: var(--ink-3); margin-left: 6px; }
+.icon-btn { min-width: 44px; height: 44px; display: grid; place-items: center; color: var(--ink-2); border-radius: 12px; }
+
+.state { margin-top: 16px; }
+.state .big { font-size: 22px; line-height: 1.2; font-weight: 700; }
+.state .meta { margin-top: 6px; font-size: 15px; line-height: 1.4; color: var(--ink-2); }
+
+/* Timeline: fills the space between the status line and the keys, newest at the bottom.
+   flex-basis 0 lets it take only the leftover space and scroll inside it. */
+.timeline {
+  flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+  display: flex; flex-direction: column-reverse; margin-top: 12px;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 24px); mask-image: linear-gradient(to bottom, transparent, #000 24px);
+}
+.tl-empty { padding: 8px 0; }
+.tl-day { padding-top: 16px; }
+.tl-day h3 { font-size: 13px; font-weight: 700; color: var(--ink-3); padding-bottom: 4px; }
+.tl-list { list-style: none; padding: 0; }
+.tl-row { display: grid; grid-template-columns: 68px 1fr; gap: 8px; padding: 7px 0; font-size: 15px; line-height: 1.3; }
+.tl-row + .tl-row { box-shadow: inset 0 1px 0 var(--line); }
+.tl-row time { font-size: 13px; font-weight: 500; color: var(--ink-3); padding-top: 1px; }
+.tl-what { font-weight: 600; overflow-wrap: anywhere; }
+.tl-row.off .tl-what { color: var(--off); font-weight: 700; }
+.tl-note { display: block; font-size: 13px; font-weight: 500; color: var(--ink-2); }
+
+/* Controls: anchored to the bottom (the thumb zone) */
+.controls { margin-top: auto; padding-top: 16px; padding-bottom: 140px; display: grid; gap: 12px; }
+.flow { border: 0; padding: 0; min-width: 0; display: grid; gap: 12px; }
+.toilet-dock {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); z-index: 2;
+  width: min(430px, 100%); min-width: 0; border: 0;
+  padding: 12px 16px calc(env(safe-area-inset-bottom) + 16px); background: var(--ground);
+}
+.save-error {
+  position: fixed; top: calc(env(safe-area-inset-top) + 8px); left: 50%; transform: translateX(-50%); z-index: 6;
+  width: min(398px, calc(100% - 32px)); padding: 16px; border-radius: 16px;
+  background: var(--surface); box-shadow: var(--ring);
+  display: grid; gap: 8px; font-size: 15px; color: var(--ink-2);
+}
+.save-error .k { min-height: 44px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+
+.k {
+  min-height: 72px; border-radius: 16px; background: var(--surface); box-shadow: var(--ring);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px;
+  font-size: 17px; font-weight: 700; text-align: center;
+  transition: transform 120ms var(--ease);
+}
+.k:active { transform: scale(0.97); }
+.k:disabled { cursor: default; }
+.k small { font-size: 13px; font-weight: 500; color: var(--ink-3); min-height: 20px; display: grid; place-items: center; }
+.k.main { min-height: 116px; font-size: 26px; background: var(--key); color: var(--key-ink); box-shadow: none; }
+.k.main small { font-size: 15px; color: color-mix(in srgb, var(--key-ink) 78%, transparent); }
+.k.voice { grid-column: span 2; }
+.k.off { color: var(--off); }
+.k.tall { min-height: 96px; font-size: 22px; }
+.k.taller { min-height: 140px; }
+.k.wide { grid-column: 1 / -1; }
+.k.primary { background: var(--key); color: var(--key-ink); box-shadow: none; }
+.k.done { background: var(--key); color: var(--key-ink); box-shadow: none; }
+.k.done small { color: var(--key-ink); }
+
+/* Flow panels open in the same spot as the buttons they replace */
+.panel { display: grid; gap: 8px; }
+.panel-head { display: flex; align-items: center; justify-content: space-between; min-height: 44px; }
+.panel-head h2 { font-size: 22px; font-weight: 700; }
+.panel-head .q { display: block; font-size: 13px; font-weight: 500; color: var(--ink-3); }
+.rowlabel { font-size: 14px; font-weight: 700; color: var(--ink-3); padding: 6px 2px 0; }
+.rowlabel.off { color: var(--off); }
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 4px; border-radius: 14px; background: var(--surface); box-shadow: 0 0 0 1px var(--line); }
+.seg button { height: 44px; border-radius: 10px; font-size: 15px; font-weight: 700; color: var(--ink-2); }
+.seg button[aria-pressed="true"] { background: var(--key); color: var(--key-ink); }
+
+/* Running session */
+.session { border-radius: 20px; background: var(--surface); box-shadow: 0 0 0 1px var(--line-2); padding: 16px; display: grid; gap: 12px; }
+.session-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.session-title h2 { font-size: 22px; display: flex; align-items: center; gap: 8px; }
+.pulse { width: 8px; height: 8px; border-radius: 4px; background: var(--yuykhan); flex: none; }
+.clock { font-size: 44px; font-weight: 700; letter-spacing: -0.02em; line-height: 1; }
+.stage-copy { font-size: 15px; color: var(--ink-2); }
+.hint { font-size: 13px; color: var(--ink-3); }
+.session-actions { display: grid; gap: 8px; }
+.session-actions .k { font-size: 19px; }
+.session-actions .pair .k { min-height: 96px; }
+.session-tools { display: flex; justify-content: flex-end; }
+.session-tools button { min-height: 44px; padding: 0 4px; font-size: 13px; font-weight: 600; color: var(--ink-3); }
+.note-label { display: grid; gap: 6px; font-size: 15px; font-weight: 600; }
+textarea {
+  width: 100%; min-height: 64px; resize: none; padding: 12px 14px; border-radius: 12px; border: 0;
+  background: var(--ground); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line-2); font: inherit; font-size: 17px;
+}
+textarea::placeholder { color: var(--ink-3); }
+
+/* Say it */
+.heard { border-radius: 14px; padding: 12px 14px; background: var(--surface); box-shadow: 0 0 0 1px var(--line-2); font-size: 15px; color: var(--ink-2); overflow-wrap: anywhere; }
+.heard b { display: block; font-size: 19px; margin-top: 2px; color: var(--ink); }
+
+/* Toast: top of the screen, out of the thumb's way */
+.toast {
+  position: fixed; left: 50%; top: calc(env(safe-area-inset-top) + 8px); width: min(398px, calc(100% - 32px)); z-index: 5;
+  transform: translate(-50%, -12px); opacity: 0; visibility: hidden; pointer-events: none;
+  transition: transform 200ms var(--ease), opacity 200ms var(--ease), visibility 0s 200ms;
+  background: var(--surface); border-radius: 16px; padding: 10px 12px 10px 16px;
+  box-shadow: 0 0 0 1px var(--line-2), 0 10px 30px rgba(0, 0, 0, .14);
+}
+.toast.show { transform: translate(-50%, 0); opacity: 1; visibility: visible; pointer-events: auto; transition: transform 200ms var(--ease), opacity 200ms var(--ease); }
+.toast-top { display: flex; align-items: flex-start; gap: 8px; }
+.toast-top .msg { flex: 1; font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; min-height: 44px; }
+.toast-top .msg svg { flex: none; color: var(--yuykhan); }
+.toast-top button { height: 44px; min-width: 44px; padding: 0 8px; flex: none; font-weight: 700; color: var(--yuykhan); }
+.offsets { display: flex; gap: 6px; margin-top: 4px; }
+.offsets button { flex: 1; height: 44px; border-radius: 10px; font-size: 14px; font-weight: 600; box-shadow: inset 0 0 0 1px var(--line-2); }
+.offsets button[aria-pressed="true"] { background: var(--key); color: var(--key-ink); box-shadow: none; }
+
+.drawn-check { flex: none; }
+.drawn-check path { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 260ms var(--ease) forwards; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .drawn-check path { animation: none; stroke-dashoffset: 0; }
+  .k, .toast, .toast.show { transition: none; }
+}
