@@ -15,6 +15,7 @@ import { clock, dayLabel, durShort, durText } from '@/lib/time';
 import Check from './Check';
 import { MealPanel, PeePanel, PoopPanel, VoicePanel, type DoneKey } from './panels';
 import SessionPanel from './SessionPanel';
+import Timeline from './Timeline';
 import Toast, { type ToastData } from './Toast';
 
 type View = 'home' | 'pee' | 'poop' | 'meal' | 'voice';
@@ -202,6 +203,7 @@ export default function LogScreen() {
         <p className="big">{big}</p>
         <p className="meta">{meta}</p>
       </section>
+      {ready ? <Timeline events={list} now={now} /> : <div className="timeline" />}
       <main className="controls" aria-label="Log">
         {failed && <div className="save-error" role="alert">
           <p>Couldn’t save. Your entry is still here.</p>

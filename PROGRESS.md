@@ -2,6 +2,17 @@
 
 Updated at the end of every build session by whoever ran it.
 
+## 2026-10-10 (Yuykhan, Claude Code): timeline on the Log screen
+
+Branch: `phase1-app-shell` (still pull request #2). Yuykhan tried the preview: logging works.
+She asked for the log to show in the empty space above the keys.
+- `components/Timeline.tsx`: the last 48 hours, newest right above the keys, older entries
+  scroll up and fade under the status line. "Today" / "Yesterday" headings (New York days).
+  Notes show under each row, off-target in the accident colour, finished sessions as their
+  summary. Running sessions stay in their card only. Read-only for now: tapping a row to edit
+  is piece 4; a who-logged-it dot comes with accounts (piece 2).
+- One test added (9 of 9 pass). Checked at 375px with a full day of entries.
+
 ## 2026-10-09 (Yuykhan, Claude Code): review of Codex's fixes
 
 Branch: `phase1-app-shell`, [pull request #2](https://github.com/vvessels/evie/pull/2).

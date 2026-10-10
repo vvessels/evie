@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import LogScreen from '@/components/LogScreen';
 import { addEvent, addInstantEvent, db, recentEvents, updateEvent } from '@/lib/db';
@@ -128,4 +128,17 @@ it('lets you dismiss a failed save so the app is usable again', async () => {
   fireEvent.click(screen.getByRole('button', { name: 'Don’t save' }));
   await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
   expect(screen.getByRole('button', { name: 'Pee' }).matches(':disabled')).toBe(false);
+});
+
+it('shows logs in the timeline by day, without the running session', async () => {
+  await addEvent('pee', { at: new Date(Date.now() - 30 * 3600000).toISOString(), data: { target: 'off', amount: 'big' } });
+  await addEvent('walk', { data: { steps: [{ step: 'running', label: 'Walk', at: new Date().toISOString() }] } });
+  render(<LogScreen />);
+  await screen.findByRole('button', { name: 'End walk' });
+  const timeline = screen.getByRole('region', { name: 'Log so far' });
+  expect(within(timeline).getByText('Pee off target, big')).toBeTruthy();
+  expect(within(timeline).queryByText(/Walk/)).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'End walk' }));
+  await waitFor(() => expect(within(timeline).getByText(/^Walk, /)).toBeTruthy());
+  expect(within(timeline).getByRole('heading', { name: 'Today' })).toBeTruthy();
 });
