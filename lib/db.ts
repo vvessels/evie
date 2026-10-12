@@ -114,9 +114,12 @@ export async function addInstantEvent(type: InstantType, data: EventData, at: st
 export const softDelete = (id: string) => updateEvent(id, { deletedAt: new Date().toISOString() });
 export const restore = (id: string) => updateEvent(id, { deletedAt: null });
 
+/** How far back the home screen looks: the timeline and the status line. */
+export const RECENT_MS = 48 * 3600 * 1000;
+
 /** Recent history plus every unfinished session, oldest first, without deleted rows. */
 export async function recentEvents(): Promise<EvieEvent[]> {
-  const since = new Date(Date.now() - 48 * 3600 * 1000).toISOString();
+  const since = new Date(Date.now() - RECENT_MS).toISOString();
   const [recent, running] = await Promise.all([
     db.events.where('at').above(since).toArray(),
     db.events.where('type').anyOf(SESSION_KINDS).filter(e => !e.endedAt && !e.deletedAt).toArray(),

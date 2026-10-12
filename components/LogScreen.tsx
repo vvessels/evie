@@ -203,7 +203,7 @@ export default function LogScreen() {
         <p className="big">{big}</p>
         <p className="meta">{meta}</p>
       </section>
-      {ready ? <Timeline events={list} now={now} /> : <div className="timeline" />}
+      {ready ? <Timeline events={list} now={now} /> : <div className="timeline-wrap" />}
       <main className="controls" aria-label="Log">
         {failed && <div className="save-error" role="alert">
           <p>Couldn’t save. Your entry is still here.</p>

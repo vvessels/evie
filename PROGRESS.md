@@ -2,6 +2,68 @@
 
 Updated at the end of every build session by whoever ran it.
 
+## 2026-10-11 (Yuykhan, Claude Code): fixes for Codex's three timeline findings
+
+Branch: `phase1-app-shell`, [pull request #2](https://github.com/vvessels/evie/pull/2).
+Addresses [Codex's review](https://github.com/vvessels/evie/pull/2#pullrequestreview-5485568204).
+
+### Changed
+- **New log after scrolling up:** the timeline scrolls back to the newest entry whenever a
+  visible entry is added or changed (`components/Timeline.tsx`).
+- **Fade on short screens:** the timeline sits in a size container (`.timeline-wrap`); the 24px
+  top fade only applies when it is at least 88px tall. At 320 x 568 (26.6px tall) there is no
+  fade, so the newest row keeps full contrast. Pee and Poop are unchanged.
+- **48-hour cutoff:** the timeline filters by age against the ticking clock (`RECENT_MS` in
+  `lib/db.ts`), so entries leave on time with no database change, and on returning to the app
+  (the clock updates on `visibilitychange`). Running sessions are unaffected and keep their card.
+
+### Verified
+- `tests/timeline.test.tsx`, 7 new tests (16 of 16 pass): scroll back to newest from a scrolled-up
+  position; 47h59m entry gone after two minutes of clock only; a 49-hour running session keeps its
+  card; Today/Yesterday split at New York midnight across both 2026 clock changes (including the
+  repeated 1:30 AM); previous-day maths across month, year and leap day; fade rule only inside
+  the container query. Each of the three fix tests was confirmed to fail with its fix removed.
+- `npm run lint` and `npm run build` pass (the known fallback-font warning remains).
+- Desktop browser, dev server:
+  - 390 x 844 with 30+ entries: scrolled up 400px, logged Water, newest row fully visible
+    above the keys. A 47h59m entry disappeared within about a minute, with no save in between.
+    Fade present (302px timeline).
+  - 320 x 568: timeline 26.6px with no fade; newest row text fully inside it, readable in light
+    and dark. Pee/Poop 116px at y=436 to 552 on home, Pee panel, and sleep settling, whining
+    and out of crate.
+- DESIGN.md sections 2 to 10 checked by hand. `/interface-design:design-review` still isn't
+  installed on this laptop.
+
+### Still needs checking on both real iPhones (installed home-screen app, not done yet)
+- Timeline scroll and the return-to-newest after logging, by finger, with momentum scrolling.
+- The fade looks right on each phone's screen size, light and dark.
+- Leaving the app in the background past an entry's 48-hour mark, then reopening.
+- The earlier checks: haptics, status bar colour, safe areas, keyboard with notes, storage after
+  closing the app mid-session.
+
+## 2026-10-11 (Yuykhan, Codex): review of Claude's two follow-up commits
+
+Branch: `phase1-app-shell`. Reviewed `b629fc8` and `6ba1bbd`, after `abd31a5`, in
+[pull request #2](https://github.com/vvessels/evie/pull/2#pullrequestreview-5485568204).
+This was a review only. No app fixes were made or pushed; this handoff note is local.
+
+- Posted three findings: a new log stays hidden after scrolling into older history;
+  the 24px timeline fade makes the newest row hard to read at 320 x 568; entries can
+  remain visible after passing the 48-hour cutoff until another database change.
+- `npm test` (9 tests), `npm run lint` and `npm run build` pass. Build retains the
+  previously documented fallback-font warning. Five temporary review checks outside the
+  repo covered New York midnight/DST and calendar boundaries, heading changes,
+  deleted/running-row exclusion, unlinked bathroom saves, and the stale-cutoff reproduction.
+- Browser checks at 390 x 844 and 320 x 568 confirmed Pee/Poop stay pinned and 116px tall
+  with a populated timeline, the Pee panel and a sleep session. Checked light/dark readability
+  and DESIGN.md sections 2–10. No new save-loss, duplicate-save or permanent-lock issue found.
+
+### Next
+- Claude addresses the three inline findings, adds regression coverage and requests review.
+- Both people test the Vercel preview as an installed home-screen app on their real iPhones
+  before merge. Desktop checks do not verify iOS storage, keyboard, safe areas or haptics.
+- Include this local review note in the builder's next commit.
+
 ## 2026-10-10 (Yuykhan, Claude Code): timeline on the Log screen
 
 Branch: `phase1-app-shell` (still pull request #2). Yuykhan tried the preview: logging works.

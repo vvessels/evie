@@ -59,10 +59,17 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--ink); ou
 
 /* Timeline: fills the space between the status line and the keys, newest at the bottom.
    flex-basis 0 lets it take only the leftover space and scroll inside it. */
+.timeline-wrap { flex: 1 1 0; min-height: 0; margin-top: 12px; display: flex; container-type: size; }
 .timeline {
-  flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
-  display: flex; flex-direction: column-reverse; margin-top: 12px;
-  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 24px); mask-image: linear-gradient(to bottom, transparent, #000 24px);
+  flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+  display: flex; flex-direction: column-reverse;
+}
+/* Older entries fade out at the top, but only when there's room for the fade above the newest
+   entry. On short screens the timeline can be under 30px tall; there it stays unfaded. */
+@container (min-height: 88px) {
+  .timeline {
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 24px); mask-image: linear-gradient(to bottom, transparent, #000 24px);
+  }
 }
 .tl-empty { padding: 8px 0; }
 .tl-day { padding-top: 16px; }

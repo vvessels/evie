@@ -1,7 +1,8 @@
 'use client';
 // The log so far, filling the space above the keys. Newest sits right above the keys and older
 // entries scroll up, so what you just logged is always in view (DESIGN.md: archival).
-import { isSession, type EvieEvent } from '@/lib/db';
+import { useEffect, useRef } from 'react';
+import { isSession, RECENT_MS, type EvieEvent } from '@/lib/db';
 import { describe } from '@/lib/describe';
 import { clock, dayKey, dayLabel, previousDayKey } from '@/lib/time';
 
@@ -11,8 +12,18 @@ function noteOf(ev: EvieEvent) {
 }
 
 export default function Timeline({ events, now }: { events: EvieEvent[]; now: number }) {
-  // Running sessions already have their own card below.
-  const rows = events.filter(e => !(isSession(e.type) && !e.endedAt));
+  // Running sessions already have their own card below. The 48-hour cutoff is applied against the
+  // ticking clock too, because the database query only reruns when something is saved.
+  const cutoff = now - RECENT_MS;
+  const rows = events.filter(e => !(isSession(e.type) && !e.endedAt) && Date.parse(e.at) > cutoff);
+
+  // When something is logged or changed, come back to the newest entry, even after scrolling up.
+  // With column-reverse, scrollTop 0 is the bottom of the list.
+  const listRef = useRef<HTMLElement>(null);
+  const lastChange = rows.reduce((max, e) => (e.updatedAt > max ? e.updatedAt : max), '');
+  useEffect(() => {
+    if (listRef.current) listRef.current.scrollTop = 0;
+  }, [lastChange]);
   const today = dayKey(now);
   const yesterday = previousDayKey(today);
   const label = (key: string, sample: string) => (key === today ? 'Today' : key === yesterday ? 'Yesterday' : dayLabel(sample));
@@ -25,26 +36,29 @@ export default function Timeline({ events, now }: { events: EvieEvent[]; now: nu
   }
 
   return (
-    // column-reverse keeps the list scrolled to the newest entry, at the bottom, with no script.
-    <section className="timeline" aria-label="Log so far">
-      {days.length === 0 && <p className="hint tl-empty">What you log shows up here.</p>}
-      {days.reverse().map(day => (
-        <div className="tl-day" key={day.key}>
-          <h3>{label(day.key, day.rows[0].at)}</h3>
-          <ol className="tl-list">
-            {day.rows.map(ev => {
-              const off = (ev.type === 'pee' || ev.type === 'poop') && ev.data.target === 'off';
-              const note = noteOf(ev);
-              return (
-                <li key={ev.id} className={`tl-row${off ? ' off' : ''}`}>
-                  <time dateTime={ev.at}>{clock(ev.at)}</time>
-                  <span className="tl-what">{describe(ev)}{note && <span className="tl-note">{note}</span>}</span>
-                </li>
-              );
-            })}
-          </ol>
-        </div>
-      ))}
-    </section>
+    // The wrapper is a size container, so CSS can drop the fade when the space is too short.
+    // column-reverse keeps the list scrolled to the newest entry, at the bottom.
+    <div className="timeline-wrap">
+      <section className="timeline" aria-label="Log so far" ref={listRef}>
+        {days.length === 0 && <p className="hint tl-empty">What you log shows up here.</p>}
+        {days.reverse().map(day => (
+          <div className="tl-day" key={day.key}>
+            <h3>{label(day.key, day.rows[0].at)}</h3>
+            <ol className="tl-list">
+              {day.rows.map(ev => {
+                const off = (ev.type === 'pee' || ev.type === 'poop') && ev.data.target === 'off';
+                const note = noteOf(ev);
+                return (
+                  <li key={ev.id} className={`tl-row${off ? ' off' : ''}`}>
+                    <time dateTime={ev.at}>{clock(ev.at)}</time>
+                    <span className="tl-what">{describe(ev)}{note && <span className="tl-note">{note}</span>}</span>
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+        ))}
+      </section>
+    </div>
   );
 }
