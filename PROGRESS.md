@@ -2,6 +2,47 @@
 
 Updated at the end of every build session by whoever ran it.
 
+## 2026-10-11 (Yuykhan, Claude Code): review of the microphone icon
+
+Branch: `phase1-app-shell`, pull request #2. Reviewed Codex's commit `da0e899`.
+[Review posted](https://github.com/vvessels/evie/pull/2#pullrequestreview-5485825468): **no findings.**
+
+- Measured at 390 x 844 and 320 x 568, light and dark: icon 22 x 22, 8px gap, icon and label
+  centred (equal space both sides, no vertical offset), key 72px tall, exactly two columns wide,
+  same position after Socialize, clear of the Pee/Poop dock. Icon follows the text colour.
+- `aria-hidden="true"` on the icon; the button's text is exactly "Say it" and the test finds it
+  by that name. Tapping opens Say it with the text box focused.
+- `npm test` 17 of 17, lint clean, build passes (known fallback-font warning).
+- DESIGN.md sections 2 to 10: clean. Non-blocking note for the phones: a microphone may suggest
+  recording starts on tap; it opens a text box and you tap the keyboard's mic.
+- Codex found no blocking issues in `7938378` (timeline fixes) and none in pull request #3
+  (handoff rule). GitHub won't let `blackberrybun` approve #3, which she opened, so Jason
+  can approve it from his account. Neither pull request is merged.
+
+### Still pending on both real iPhones (installed home-screen app, not done)
+- VoiceOver: keys read as "Say it", "Pee", "Water"; icon not announced.
+- Keyboard and dictation in Say it and session notes.
+- Timeline scrolling by finger, return to newest after logging, background past the 48-hour
+  mark and resume.
+- Safe areas (notch, home bar), haptics, storage after closing the app mid-session.
+
+### Next
+- Both phones: run the checks above on the preview link, then Jason approves and merges #3 and
+  #2 (or tell Claude to merge). After #2 merges, piece 2 (accounts) starts from `main`.
+
+## 2026-10-11 (Yuykhan, Codex): handoff-rule review
+
+- Pulled `phase1-app-shell`: PR #2 is unchanged at `da0e899`. Its timeline review,
+  microphone implementation and passing verification are recorded below; no duplicate work.
+- Reviewed PR #3, `agents-handoff-prompt`, commit `f88c6da`. No findings: the prompt rule works
+  for both outgoing and incoming tools and is consistent with the existing handoff rules.
+  [Review posted](https://github.com/vvessels/evie/pull/3#pullrequestreview-5485817027).
+- GitHub rejected formal approval because the signed-in account `blackberrybun` authored
+  PR #3. Posted the clean review as a comment instead. Jason can provide formal approval
+  from his account if required. No changes pushed to PR #3 and nothing merged.
+- Next: Claude reviews microphone commit `da0e899` on PR #2. Real installed-iPhone checks
+  below remain pending. This local progress note should be included in the next handoff commit.
+
 ## 2026-10-11 (Yuykhan, Codex): timeline follow-up review and Say it microphone
 
 Branch: `phase1-app-shell`, [pull request #2](https://github.com/vvessels/evie/pull/2).
