@@ -16,6 +16,11 @@ Either tool can build at any stage. The repo is the handoff; nothing lives only 
 
 - **Before handing off**, the outgoing tool: commits its work, pushes the branch to GitHub, and
   writes in `PROGRESS.md` which branch it was on, what's half done, and what's next.
+- **End every handoff with a ready-to-paste prompt** for the other tool, so the person never has
+  to write one. Say what to read, which branch and commits, what to build or review, how to
+  report (review findings as pull request comments; whoever built the code fixes it), what to
+  update, and ask it to end with a prompt back. Fold in anything the person has asked for that
+  the other tool will do. Don't wait to be asked.
 - **When picking up**, the incoming tool: pulls, checks out that branch (or starts a new one from
   `main`), reads `PROGRESS.md`, then continues.
 - Never both tools on the same branch at the same time.
@@ -61,4 +66,5 @@ Either tool can build at any stage. The repo is the handoff; nothing lives only 
 
 ## End of every session
 
-Update `PROGRESS.md`: what got done, what's next, any gotchas found.
+Update `PROGRESS.md`: what got done, what's next, any gotchas found. If the next step belongs to
+the other tool, end with its handoff prompt (see "Switching between Claude Code and Codex").
