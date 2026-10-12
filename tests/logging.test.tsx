@@ -23,6 +23,16 @@ async function ready() {
   await waitFor(() => expect((screen.getByRole('button', { name: 'Water' }) as HTMLButtonElement).disabled).toBe(false));
 }
 
+it('keeps the Say it name with its microphone hidden from assistive technology', async () => {
+  await ready();
+  const key = screen.getByRole('button', { name: /^Say it$/ });
+  const icon = key.querySelector('svg');
+  expect(icon).not.toBeNull();
+  expect(icon?.getAttribute('aria-hidden')).toBe('true');
+  fireEvent.click(key);
+  expect(screen.getByRole('textbox')).toBeTruthy();
+});
+
 describe('save recovery', () => {
   it('retains a failed choice, retries once and allows another log afterwards', async () => {
     await ready();

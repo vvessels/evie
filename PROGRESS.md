@@ -2,6 +2,41 @@
 
 Updated at the end of every build session by whoever ran it.
 
+## 2026-10-11 (Yuykhan, Codex): timeline follow-up review and Say it microphone
+
+Branch: `phase1-app-shell`, [pull request #2](https://github.com/vvessels/evie/pull/2).
+
+### Reviewed
+- Reviewed Claude's `7938378` against the project rules and DESIGN.md. No blocking findings;
+  [review posted](https://github.com/vvessels/evie/pull/2#issuecomment-6115468132).
+- All 16 existing tests, lint and build passed. Verified return to newest after scrolling
+  overflowing history, light/dark at 390 x 844 and 320 x 568, and no fade on the short screen.
+- An extra temporary integration test outside the repo used the real clock hook to verify
+  that returning after the 48-hour cutoff removes an expired entry without a database write,
+  while an older running sleep session keeps its card.
+- The prior local Codex review note was already included in Claude's `7938378`.
+
+### Built and verified
+- Added a 22px inline outline microphone left of "Say it", with an 8px gap, existing colours,
+  round strokes and no fill. The key remains in its two-column position and 72px tall.
+- The icon is hidden from assistive technology; the accessible name remains exactly "Say it".
+  Added a test for the name, hidden icon and opening the text box. Updated DESIGN.md sections
+  2 and 6 to describe the icon plus label.
+- All 17 tests, lint and production build pass. The known Atkinson fallback-font warning remains.
+- Production-browser checks at both sizes in light/dark confirmed 22px icon, 8px gap, centred
+  contents, 72px key, inherited text colour, unchanged bathroom controls and working text entry.
+- Reviewed DESIGN.md sections 2–10: bottom layout, token colours and contrast, type sizes,
+  spacing/key dimensions, existing interaction, no added motion, sentence-case copy with no
+  em-dashes, accessible naming/focus and no banned decorative defaults. This uses the documented
+  Codex manual review path; no Claude design plugin was run.
+
+### Next
+- Claude reviews the separate microphone commit on this branch. Do not merge yet.
+- Both people still need the Vercel preview installed on their real iPhones: check VoiceOver
+  announces "Say it" once, icon/text readability, keyboard and dictation, finger/momentum
+  timeline scrolling, return after the 48-hour cutoff, safe areas, haptics and reopening a saved
+  session. Desktop checks do not establish these iPhone behaviours.
+
 ## 2026-10-11 (Yuykhan, Claude Code): fixes for Codex's three timeline findings
 
 Branch: `phase1-app-shell`, [pull request #2](https://github.com/vvessels/evie/pull/2).

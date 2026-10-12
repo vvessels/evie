@@ -188,7 +188,13 @@ export default function LogScreen() {
           const open = () => (kind === 'meal' ? setView('meal') : startSession(kind));
           return <button key={kind} className="k" disabled={!ready} onClick={open}>{label}</button>;
         })}
-        <button className="k voice" disabled={!ready} onClick={() => setView('voice')}>Say it</button>
+        <button className="k voice" disabled={!ready} onClick={() => setView('voice')}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <rect x="8" y="2" width="8" height="12" rx="4" />
+            <path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8" />
+          </svg>
+          <span>Say it</span>
+        </button>
       </div>
     </>
   );
