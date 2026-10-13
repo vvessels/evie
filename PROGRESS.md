@@ -2,6 +2,52 @@
 
 Updated at the end of every build session by whoever ran it.
 
+## 2026-10-13 (Yuykhan, Codex): polish review
+
+Branch: `polish-and-fixes`, PR #4. Reviewed Claude Code's `0dc8c8c` against AGENTS.md
+and DESIGN.md sections 2 to 10.
+[Review and design audit posted](https://github.com/vvessels/evie/pull/4#pullrequestreview-5507786958).
+No app, prototype or test fixes made; this handoff commit changes only this progress note.
+
+### Findings for Claude Code
+- Dictation test's listening/stop button has only 2.45:1 contrast in dark mode; use a readable
+  neutral token pair, keeping the accident colour for accidents.
+- `npm test` failed twice, 16/17 passing. The Undo note test can find the old session field
+  before the database-driven UI closes it, then fail to find End walk. An instrumented copy
+  reproduced this timing race. All ten logging tests passed in a temporary copy that waits
+  for the old session to disappear and Undo to be enabled before reopening. Browser Undo,
+  edit and save worked; this is not evidence of lost notes. Stabilize the checked-in test.
+- New `box-shadow` transitions contradict DESIGN section 7's transform/opacity-only rule.
+  Keep depth changes immediate or crossfade with opacity. Reduced-motion override is correct.
+
+### Verified and design recommendations
+- Installed locked dependencies. Lint and production build pass (existing Atkinson fallback
+  warning). Main's 17 tests passed with the same dependencies; PR's full suite remains failing.
+- Home, Pee panel and settling sleep checked at 390 x 844 and 320 x 568 in light and dark.
+  No home-grid horizontal overflow; standard keys stay 72px, icons 22px, Say it two columns.
+  Labels centre without empty time lines; icons stay hidden from accessible names. Main-app
+  text contrast passes, including gradients. No UI em-dashes or new entrance animations.
+- Pee/Poop remain pinned. Short-screen Pee/sleep actions need page scrolling and remain
+  reachable. Hidden timeline scrollbar still scrolls; logging returns to newest, no short-screen
+  fade. Haptic calls are before the first await, but physical feedback is not verified.
+- Dictation page is served by the production build; inspected layout and recognition handlers.
+  Did not request microphone access or test actual speech recognition.
+- Recommended next polish: a compact short-screen layout using less noninteractive spacing
+  and a documented smaller status/timer scale, preserving tap targets. Home history has about
+  21px at 320 x 568. Consider quieter history separators; reconcile DESIGN's line-token table
+  with CSS; clear or label a previous dictation transcript when another attempt begins.
+
+### Next and still unverified
+- Claude Code fixes the review findings on this branch, reruns tests/lint/build and the size/theme
+  checks, posts results on PR #4, updates this file, commits and pushes, then asks Codex to review.
+  Do not merge yet. Layout polishes above are proposals, not implemented changes.
+- Both real iPhones, installed home-screen app: verify haptics and record iOS versions;
+  dictation in Safari and its separate home-screen installation; keyboard/safe areas;
+  touch scrolling, Pee and sleep actions; close/reopen mid-session. Desktop checks do not
+  satisfy the device requirement. Keep accessible names required by AGENTS.md and DESIGN.md.
+- After this PR and device verification, resume prompt B (session audit, edit/delete, past
+  entries, sleep exits), then accounts and sync as planned below.
+
 ## 2026-10-13 (Jason, Claude Code): phone test feedback, polish and quick fixes
 
 Branch: `polish-and-fixes`. PRs #2 (app shell) and #3 (handoff rule) are merged to `main`.
