@@ -28,7 +28,8 @@ Taste in four words (Jason's vocabulary):
 - **Pee and Poop side by side, pinned to the bottom edge** (largest, dark keys). They never
   move: same spot on the home screen, inside every session, inside the sleep loop.
 - Above them, a 3-column grid of equal keys: Meal, Water, Sleep, Walk, Play, Training,
-  Socialize, and **Say it** (voice) spanning two columns.
+  Socialize, and a **microphone icon plus Say it** (voice) spanning two columns. The 22px
+  outline icon sits left of the label with an 8px gap, both centred in the 72px-tall key.
 - **Every flow opens in the same spot as the buttons it replaced.** Your thumb never travels to
   the top of the screen to finish a log.
 - A running session (sleep, walk, play, training, socialization) replaces the grid with its own
@@ -98,8 +99,9 @@ warm dark (`--key` dark), never a light block. Follow the phone's setting, with 
   After a session ends, the toast shows its summary ("Slept 1 hr 10 min, took 10 min to fall
   asleep, whined once").
 - **Undo, never confirm dialogs.** Deletes are soft.
-- **Voice (Say it):** opens a text box with the keyboard up; the person taps the keyboard's
-  mic. The app shows "Got it as ..." and saves on one tap. Never saves a guess silently.
+- **Voice (microphone icon plus Say it):** opens a text box with the keyboard up; the person
+  taps the keyboard's mic. The icon is hidden from assistive technology, so the key's name
+  stays "Say it". The app shows "Got it as ..." and saves on one tap. Never saves a guess silently.
 - **Haptics:** iOS Safari has no vibration API. The prototype toggles a hidden
   `<input type="checkbox" switch>`, which plays a system haptic on iOS 18+. Unverified on a
   device; verify before relying on it.
