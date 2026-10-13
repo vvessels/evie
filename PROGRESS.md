@@ -2,6 +2,39 @@
 
 Updated at the end of every build session by whoever ran it.
 
+## 2026-10-13 (Jason, Claude Code): phone test feedback, polish and quick fixes
+
+Branch: `polish-and-fixes`. PRs #2 (app shell) and #3 (handoff rule) are merged to `main`.
+
+### Phone test (Jason, iPhone 14 Pro Max)
+- Works: timeline returns to newest after logging; a sleep session survives closing the app;
+  nothing under the notch or home bar.
+- Haptic did not fire. VoiceOver checks are dropped: the app is internal, for the two of us.
+
+### Built on this branch (prompt A from Jason's chat, folded in with the polish)
+- **Look:** Jason asked Claude to take charge using his saved resources (Raindrop, "Design
+  Resources New"). Used the interfaces.dev cheat sheet (layered shadows instead of outlines,
+  keys that sink when pressed) and Phosphor icons (one bold 22px icon per home key). Skipped
+  the "Components" libraries (Arc UI, ObsidianUI, React Bits, Watermelon UI, Dot Matrix,
+  react-spring): animated landing-page kits, wrong for a half-awake logging app.
+  Darker page ground so white keys sit on it, top-lit dark keys, sunk text boxes, bigger
+  status line (28px) and session timer (52px). DESIGN.md sections 3 to 7 updated.
+- **Labels centred** when a key has nothing under it (Pee choices, Meal, Pee/Poop before the
+  first log).
+- **Timeline scrollbar hidden.**
+- **Haptic now fires inside the tap,** before the save. WebKit only plays the switch haptic
+  during a real tap (bug 285120). If it still doesn't fire on the phones, drop it.
+- **`prototypes/dictation-test.html`:** tests whether one-tap dictation (Safari's speech
+  recognition) works in an installed home-screen app. Decides how Say it works.
+- Tests 17 of 17, lint, build pass. Design review: one fix (Say it icon colour).
+
+### Next
+- Codex reviews this PR. Both phones check the preview (see PR), including the dictation test
+  page added to the home screen on its own.
+- Then Yuykhan: **prompt B** (session audit, then edit/delete, past entries, sleep exits).
+  Prompt A is done here; don't run it.
+- Then piece 2 (accounts) and piece 3 (sync). Daily use starts after piece 3.
+
 ## 2026-10-11 (Yuykhan, Claude Code): review of the microphone icon
 
 Branch: `phase1-app-shell`, pull request #2. Reviewed Codex's commit `da0e899`.
