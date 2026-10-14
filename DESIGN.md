@@ -51,8 +51,8 @@ Colour carries meaning only: who logged it, off target, something running live.
 | `--ink` | `#17191c` | `#ece8e2` | Primary text |
 | `--ink-2` | `#4a4e55` | `#b9b3aa` | Secondary text |
 | `--ink-3` | `#5f636b` | `#938c83` | Meta, hints, times |
-| `--line` | `rgba(23,25,28,.10)` | `rgba(236,232,226,.09)` | Soft edges |
-| `--line-2` | `rgba(23,25,28,.20)` | `rgba(236,232,226,.18)` | Key and input edges |
+| `--line` | `rgba(23,25,28,.08)` | `rgba(236,232,226,.08)` | Soft edges |
+| `--line-2` | `rgba(23,25,28,.18)` | `rgba(236,232,226,.16)` | Key and input edges, timeline separators |
 | `--key` / `--key-ink` | `#17191c` / `#f2f2ef` | `#423d37` / `#ece8e2` | Pee, Poop, primary actions. Filled with `--key-fill`, a top-lit gradient (`#2d3035` to `#17191c`; dark `#4d4842` to `#3a3631`) |
 | `--jason` | `#4c6884` | `#95afc8` | Jason's dot and side of the spine |
 | `--yuykhan` | `#8a5a24` | `#d8a96d` | Yuykhan's dot, Undo, live session pulse |
@@ -122,7 +122,7 @@ warm dark (`--key` dark), never a light block. Follow the phone's setting, with 
 ## 7. Motion
 
 - Easing: `cubic-bezier(.23, 1, .32, 1)` for everything.
-- Press: `scale(0.97)` plus `--depth-press`, 160ms. Check draw: 260ms. Toast in/out: 200ms. Records sheet: 260ms.
+- Press: `scale(0.97)` over 160ms; the shadow switches to `--depth-press` immediately (not animated). Check draw: 260ms. Toast in/out: 200ms. Records sheet: 260ms.
 - Animate only `transform` and `opacity`. No entrance animations, nothing on scroll.
 - `prefers-reduced-motion`: the check appears drawn, nothing moves.
 

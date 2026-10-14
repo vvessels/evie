@@ -9,15 +9,17 @@
 <meta name="apple-mobile-web-app-title" content="Dictation test">
 <title>Dictation test</title>
 <style>
-  :root { --ground: #ebeae5; --surface: #fff; --ink: #17191c; --ink-3: #5f636b; --off: #b23a2a; color-scheme: light; }
-  @media (prefers-color-scheme: dark) { :root { --ground: #121110; --surface: #262421; --ink: #ece8e2; --ink-3: #938c83; --off: #e2826f; color-scheme: dark; } }
+  :root { --ground: #ebeae5; --surface: #fff; --ink: #17191c; --ink-3: #5f636b; color-scheme: light; }
+  @media (prefers-color-scheme: dark) { :root { --ground: #121110; --surface: #262421; --ink: #ece8e2; --ink-3: #938c83; color-scheme: dark; } }
   * { box-sizing: border-box; margin: 0; }
   body { background: var(--ground); color: var(--ink); font: 17px/1.4 system-ui, sans-serif; padding: calc(env(safe-area-inset-top) + 24px) 16px 32px; max-width: 430px; margin: 0 auto; display: grid; gap: 16px; }
   h1 { font-size: 22px; }
   p { color: var(--ink-3); font-size: 15px; }
   #mode, #support { font-weight: 700; color: var(--ink); }
   button { font: inherit; font-weight: 700; font-size: 19px; border: 0; border-radius: 16px; min-height: 96px; background: #17191c; color: #f2f2ef; }
-  button[aria-pressed="true"] { background: var(--off); }
+  /* Listening: the light card with dark text and a ring, readable in both themes.
+     --off is for accidents only (DESIGN.md section 3), so it isn't used here. */
+  button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: inset 0 0 0 2px var(--ink); }
   #words { min-height: 120px; padding: 14px; border-radius: 14px; background: var(--surface); font-size: 19px; }
   #log { font: 13px/1.5 ui-monospace, monospace; color: var(--ink-3); white-space: pre-wrap; }
 </style>
@@ -41,6 +43,8 @@
   $('go').onclick = () => {
     if (!SR) { log('No SpeechRecognition API here.'); return; }
     if (rec) { rec.stop(); return; }
+    $('words').textContent = '';
+    log('attempt: transcript cleared');
     rec = new SR();
     rec.lang = 'en-US';
     rec.interimResults = true;

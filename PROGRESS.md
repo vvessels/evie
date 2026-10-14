@@ -2,6 +2,52 @@
 
 Updated at the end of every build session by whoever ran it.
 
+## 2026-10-13 (Yuykhan, Claude Code): fixes for Codex's polish review
+
+Branch: `polish-and-fixes`, PR #4. Addresses
+[Codex's review](https://github.com/vvessels/evie/pull/4#pullrequestreview-5507786958). Not merged.
+
+### Fixed
+- **Dictation listening button** (`prototypes/dictation-test.html`): listening is now the surface
+  colour with ink text and a 2px ink ring, not `--off`. Measured 17.61:1 light, 12.68:1 dark
+  (idle 15.7:1). `--off` removed from that page. Each new attempt also clears the previous
+  transcript and logs "attempt: transcript cleared", so a failed retry can't look like new words.
+- **Undo test race** (`tests/logging.test.tsx`): reproduced first, 2 failures in 18 runs under
+  load. The test now waits for the walk's card to go and for Undo to be enabled (only after the
+  new toast is set) before tapping Undo, then for the reopened note box. All note assertions kept,
+  plus one more: the second reopen shows "Park loop, then home". 24 of 24 runs pass under the
+  same load.
+- **Press motion** (`app/globals.css`): keys transition `transform` only; the pressed shadow
+  switches instantly. DESIGN.md section 7 says so. New `tests/design.test.tsx` fails if any
+  `transition` animates anything but transform or opacity (checked: it fails on the old code).
+- DESIGN.md line tokens now match the CSS (`.08/.18` light, `.08/.16` dark).
+
+### Verified
+- `npm test` 18 of 18 (after a clean `npm ci`), `npm run lint` clean, `npm run build` passes
+  (known fallback-font warning).
+- Desktop browser, dev server, light and dark:
+  - 390 x 844: home keys 114 x 72, only `transform 0.16s` on keys, Pee/Poop 175 x 116 at y=712.
+    Pee panel and sleep (settling, whining, out of crate) fit with no page scroll, nothing under 44px.
+  - 320 x 568: Pee/Poop 140 x 116 at y=436 everywhere, no sideways overflow, nothing under 44px.
+    Home timeline 21px. Page scroll needed: Pee panel 65px, sleep settling/whining 128px, out of
+    crate 229px (actions reachable above the dock after scrolling).
+
+### Recommended follow-up (separate PR): short screens
+Only matters if one of our phones is short (SE or mini, 568 to 667px tall); Jason's 14 Pro Max
+is 932px. If so, a focused PR under a `max-height: 700px` rule, keeping every key size:
+- Status line 28 to 22px, session timer 52 to 40px, documented in DESIGN.md as a short-screen scale.
+- Trim non-tappable spacing: status top margin, controls top padding, session card padding and gap.
+- Session note box starts one line tall (grows when typing).
+- Target at 320 x 568: Pee panel and sleep settling/whining with no scrolling. Out of crate (with its
+  note box) may still scroll, as it does when the keyboard is up anyway.
+- Keep wider layout changes and the softer timeline separators out of that PR.
+
+### Still pending on both real iPhones (installed home-screen app, not done)
+- Haptic on tap (Jason's 14 Pro Max: didn't fire before this PR's change). Record iOS versions.
+- Dictation test from the Safari tab and from its own home-screen icon.
+- Yuykhan's phone: keyboard and safe areas, touch scrolling, Pee and sleep actions, closing and
+  reopening mid-session.
+
 ## 2026-10-13 (Yuykhan, Codex): polish review
 
 Branch: `polish-and-fixes`, PR #4. Reviewed Claude Code's `0dc8c8c` against AGENTS.md

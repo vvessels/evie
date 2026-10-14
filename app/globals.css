@@ -125,7 +125,8 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--ink); ou
   min-height: 72px; border-radius: 16px; background: var(--surface); box-shadow: var(--depth-1);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px;
   font-size: 17px; font-weight: 700; text-align: center;
-  transition: transform 160ms var(--ease), box-shadow 160ms var(--ease);
+  /* Only the press scale animates; the deeper shadow switches straight away (DESIGN.md section 7). */
+  transition: transform 160ms var(--ease);
   will-change: transform;
 }
 .k:active:not(:disabled) { transform: scale(0.97); box-shadow: var(--depth-press); }
