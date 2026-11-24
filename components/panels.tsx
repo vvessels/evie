@@ -28,7 +28,8 @@ function ChoiceKey({ id, done, className = 'k tall', label, sub, ariaLabel, onPi
   return (
     <button className={`${className}${isDone ? ' done' : ''}`} disabled={!!done} onClick={() => onPick(id)} aria-label={ariaLabel}>
       {label}
-      <small>{isDone ? <Check /> : sub}</small>
+      {/* No sub line, no reserved space: the label sits centred until there's something under it. */}
+      {(isDone || sub) && <small>{isDone ? <Check /> : sub}</small>}
     </button>
   );
 }

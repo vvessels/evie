@@ -91,20 +91,33 @@ describe('save recovery', () => {
   });
 });
 
+/**
+ * After tapping End walk: wait until the end has really been saved (the walk's card is gone) and the
+ * save has finished (Undo is enabled again, which only happens after the new toast is set), then tap
+ * Undo and return the reopened walk's note box. Without these waits the test could grab the old note
+ * box just before a database-driven redraw removed it.
+ */
+async function undoTheEnd() {
+  await waitFor(() => expect(screen.queryByRole('textbox', { name: 'Where did you go?' })).toBeNull());
+  const undo = within(screen.getByRole('status')).getByRole('button', { name: 'Undo' });
+  await waitFor(() => expect(undo.matches(':disabled')).toBe(false));
+  fireEvent.click(undo);
+  return screen.findByRole('textbox', { name: 'Where did you go?' });
+}
+
 it('restores the editable note on Undo and saves a continuation without losing the original', async () => {
   await ready();
   fireEvent.click(screen.getByRole('button', { name: 'Walk' }));
   const note = await screen.findByRole('textbox', { name: 'Where did you go?' });
   fireEvent.change(note, { target: { value: 'Park loop' } });
   fireEvent.click(screen.getByRole('button', { name: 'End walk' }));
-  fireEvent.click(await screen.findByRole('button', { name: 'Undo' }));
-  const restored = await screen.findByRole('textbox', { name: 'Where did you go?' });
+  const restored = await undoTheEnd();
   expect((restored as HTMLTextAreaElement).value).toBe('Park loop');
   fireEvent.change(restored, { target: { value: 'Park loop, then home' } });
   fireEvent.click(screen.getByRole('button', { name: 'End walk' }));
   await waitFor(async () => expect((await db.events.toArray())[0].note).toBe('Park loop, then home'));
-  fireEvent.click(await screen.findByRole('button', { name: 'Undo' }));
-  const again = await screen.findByRole('textbox', { name: 'Where did you go?' });
+  const again = await undoTheEnd();
+  expect((again as HTMLTextAreaElement).value).toBe('Park loop, then home');
   fireEvent.change(again, { target: { value: '' } });
   fireEvent.click(screen.getByRole('button', { name: 'End walk' }));
   await waitFor(async () => expect((await db.events.toArray())[0].note).toBeNull());

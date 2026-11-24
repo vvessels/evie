@@ -46,14 +46,14 @@ Colour carries meaning only: who logged it, off target, something running live.
 
 | Token | Light | Dark | Use |
 |---|---|---|---|
-| `--ground` | `#f2f2ef` | `#151413` | Page background |
-| `--surface` | `#ffffff` | `#1f1d1b` | Keys, cards, toast |
+| `--ground` | `#ebeae5` | `#121110` | Page background (a step darker than the keys, so they sit on it) |
+| `--surface` | `#ffffff` | `#262421` | Keys, cards, toast |
 | `--ink` | `#17191c` | `#ece8e2` | Primary text |
 | `--ink-2` | `#4a4e55` | `#b9b3aa` | Secondary text |
-| `--ink-3` | `#676b74` | `#938c83` | Meta, hints, times |
-| `--line` | `rgba(23,25,28,.10)` | `rgba(236,232,226,.09)` | Soft edges |
-| `--line-2` | `rgba(23,25,28,.20)` | `rgba(236,232,226,.18)` | Key and input edges |
-| `--key` / `--key-ink` | `#17191c` / `#f2f2ef` | `#2e2a26` / `#ece8e2` | Pee, Poop, primary actions |
+| `--ink-3` | `#5f636b` | `#938c83` | Meta, hints, times |
+| `--line` | `rgba(23,25,28,.08)` | `rgba(236,232,226,.08)` | Soft edges |
+| `--line-2` | `rgba(23,25,28,.18)` | `rgba(236,232,226,.16)` | Key and input edges, timeline separators |
+| `--key` / `--key-ink` | `#17191c` / `#f2f2ef` | `#423d37` / `#ece8e2` | Pee, Poop, primary actions. Filled with `--key-fill`, a top-lit gradient (`#2d3035` to `#17191c`; dark `#4d4842` to `#3a3631`) |
 | `--jason` | `#4c6884` | `#95afc8` | Jason's dot and side of the spine |
 | `--yuykhan` | `#8a5a24` | `#d8a96d` | Yuykhan's dot, Undo, live session pulse |
 | `--off` | `#b23a2a` | `#e2826f` | Off target (accidents) only |
@@ -71,7 +71,10 @@ warm dark (`--key` dark), never a light block. Follow the phone's setting, with 
   Its slashed zero is a feature; keep it.
 - `font-variant-numeric: tabular-nums` everywhere, so times and timers don't jitter.
 - Scale: 13 (meta), 15 (secondary), 17 (key labels, body), 22 (panel titles),
-  26 (Pee/Poop), 34 (status line), 44 (session timer).
+  26 (Pee/Poop), 28 (status line, 800 weight), 52 (session timer, 800 weight).
+- **Icons:** Phosphor (`@phosphor-icons/react`), bold weight, 22px, in `--ink-2`, above the label
+  on the home grid and left of the label on wide keys (Say it). One per key, so a key can be found
+  by shape. Pee and Poop stay text only. Never reuse the night toggle's moon on a key.
 - Hierarchy comes from weight and colour as much as size: labels 700, meta 500 in `--ink-3`.
 - Sentence case. No all-caps labels.
 
@@ -79,8 +82,14 @@ warm dark (`--key` dark), never a light block. Follow the phone's setting, with 
 
 - 8px base. Gaps between keys 8px. Section gaps 24 to 28px.
 - Radii: keys 16px, session card 20px, handoff line 14px, segmented control 14px outer / 10px inner.
-- Depth: one strategy, a hairline ring plus a whisper of shadow
-  (`0 0 0 1px var(--line-2), 0 1px 2px rgba(0,0,0,.05)`). Dark keys have no ring.
+- Depth: layered shadows, not outlines (from Jason's saved interfaces.dev cheat sheet).
+  `--depth-1` for keys and cards (hairline, short contact shadow, soft long shadow, 1px top
+  highlight); `--depth-press` when a key is held down (it sinks into the page);
+  `--depth-key` for the dark keys (lit from above); `--depth-float` for the toast and the save
+  error; `--well` for text boxes and the meal toggle track (sunk into the page). Values in
+  `app/globals.css`. Dark mode has its own values, never inverted.
+- A label with nothing under it is centred in its key. The time line under a label only renders
+  when there's a time (no reserved empty space).
 - Key heights: Pee/Poop 116px, standard 72px, choice keys in flows 96px. **Nothing tappable under
   44 x 44pt.**
 
@@ -102,16 +111,18 @@ warm dark (`--key` dark), never a light block. Follow the phone's setting, with 
 - **Voice (microphone icon plus Say it):** opens a text box with the keyboard up; the person
   taps the keyboard's mic. The icon is hidden from assistive technology, so the key's name
   stays "Say it". The app shows "Got it as ..." and saves on one tap. Never saves a guess silently.
-- **Haptics:** iOS Safari has no vibration API. The prototype toggles a hidden
-  `<input type="checkbox" switch>`, which plays a system haptic on iOS 18+. Unverified on a
-  device; verify before relying on it.
+- **Haptics:** iOS Safari has no vibration API. The app toggles a hidden
+  `<input type="checkbox" switch>`, which plays a system haptic on iOS 18+, but only inside the
+  tap itself (WebKit bug 285120), so `haptic()` runs before any `await`. It did not fire on Jason's
+  phone when it ran after the save (2026-10-13). If it still doesn't fire, drop it: the press and
+  the drawn check carry the confirmation.
 - Notes can be typed or dictated wherever a text box appears; drafts survive tapping Pee or
   Poop mid-session.
 
 ## 7. Motion
 
 - Easing: `cubic-bezier(.23, 1, .32, 1)` for everything.
-- Press: `scale(0.97)`, 120ms. Check draw: 260ms. Toast in/out: 200ms. Records sheet: 260ms.
+- Press: `scale(0.97)` over 160ms; the shadow switches to `--depth-press` immediately (not animated). Check draw: 260ms. Toast in/out: 200ms. Records sheet: 260ms.
 - Animate only `transform` and `opacity`. No entrance animations, nothing on scroll.
 - `prefers-reduced-motion`: the check appears drawn, nothing moves.
 

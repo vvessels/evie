@@ -2,6 +2,7 @@
 // The home screen: quiet status at the top, logging keys anchored to the bottom (DESIGN.md section 2).
 import { useEffect, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { Drop, Footprints, ForkKnife, Bed, HandPalm, Microphone, TennisBall, UsersThree, type Icon } from '@phosphor-icons/react';
 import {
   addEvent, addInstantEvent, isSession, recentEvents, restore, softDelete, updateEvent,
   type EventData, type EvieEvent, type InstantType, type SessionKind, type StepName,
@@ -24,9 +25,10 @@ type View = 'home' | 'pee' | 'poop' | 'meal' | 'voice';
 const CONFIRM_MS = 380;
 const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
 
-const HOME_KEYS: [SessionKind | 'meal' | 'water', string][] = [
-  ['meal', 'Meal'], ['water', 'Water'], ['sleep', 'Sleep'],
-  ['walk', 'Walk'], ['play', 'Play'], ['training', 'Training'], ['social', 'Socialize'],
+// Each key gets a quiet line icon so it can be found by shape, half awake (DESIGN.md section 4).
+const HOME_KEYS: [SessionKind | 'meal' | 'water', string, Icon][] = [
+  ['meal', 'Meal', ForkKnife], ['water', 'Water', Drop], ['sleep', 'Sleep', Bed],
+  ['walk', 'Walk', Footprints], ['play', 'Play', TennisBall], ['training', 'Training', HandPalm], ['social', 'Socialize', UsersThree],
 ];
 
 export default function LogScreen() {
@@ -60,9 +62,10 @@ export default function LogScreen() {
   function confirmThen(key: string, save: () => Promise<EvieEvent>) {
     return run(async () => {
       try {
+        // Haptic first: iOS only plays it inside the tap itself, not after an await.
+        haptic();
         const ev = await save();
         setDone(key);
-        haptic();
         await wait(CONFIRM_MS);
         setView('home');
         const toastKey = ++toastCount.current;
@@ -92,8 +95,8 @@ export default function LogScreen() {
   function logNote(text: string) {
     const at = new Date().toISOString();
     return run(async () => {
-      const ev = await addEvent('note', { note: text, source: 'voice', at });
       haptic();
+      const ev = await addEvent('note', { note: text, source: 'voice', at });
       setView('home');
       showToast({ text: `Note, ${clock(ev.at)}`, undo: () => run(() => softDelete(ev.id)) });
     });
@@ -103,8 +106,8 @@ export default function LogScreen() {
     if (running) return;
     const at = new Date().toISOString();
     return run(async () => {
-      await addEvent(kind, { at, data: { steps: [{ step: kind === 'sleep' ? 'settling' : 'running', label: kind === 'sleep' ? 'Settling' : SESSION_NAME[kind], at }] } });
       haptic();
+      await addEvent(kind, { at, data: { steps: [{ step: kind === 'sleep' ? 'settling' : 'running', label: kind === 'sleep' ? 'Settling' : SESSION_NAME[kind], at }] } });
     });
   }
 
@@ -112,8 +115,8 @@ export default function LogScreen() {
     if (!running) return;
     const at = new Date().toISOString();
     return run(async () => {
-      await advanceSession(running, step, label, at);
       haptic();
+      await advanceSession(running, step, label, at);
     });
   }
 
@@ -122,8 +125,8 @@ export default function LogScreen() {
     const s = running;
     const endedAt = new Date().toISOString();
     return run(async () => {
-      const ended = await finishSession(s, endedAt);
       haptic();
+      const ended = await finishSession(s, endedAt);
       // The reopened note field falls back to the saved session note.
       showToast({ text: sessionSummary(ended), undo: () => run(() => updateEvent(s.id, { endedAt: null })) });
     });
@@ -157,10 +160,10 @@ export default function LogScreen() {
   const toilet = (
     <div className="toilet pair">
       <button className="k main" onClick={() => setView('pee')} disabled={!ready}>
-        Pee<small>{agoKey(lastPee)}</small>
+        Pee{agoKey(lastPee) && <small>{agoKey(lastPee)}</small>}
       </button>
       <button className="k main" onClick={() => setView('poop')} disabled={!ready}>
-        Poop<small>{agoKey(lastPoop)}</small>
+        Poop{agoKey(lastPoop) && <small>{agoKey(lastPoop)}</small>}
       </button>
     </div>
   );
@@ -176,23 +179,24 @@ export default function LogScreen() {
   else controls = (
     <>
       <div className="grid3">
-        {HOME_KEYS.map(([kind, label]) => {
+        {HOME_KEYS.map(([kind, label, KeyIcon]) => {
           if (kind === 'water') {
             const isDone = done === 'water';
             return (
-              <button key={kind} className={`k${isDone ? ' done' : ''}`} disabled={!ready || !!done} onClick={() => logInstant('water', 'water')}>
-                {label}{isDone && <Check />}
+              <button key={kind} className={`k icon${isDone ? ' done' : ''}`} disabled={!ready || !!done} onClick={() => logInstant('water', 'water')}>
+                {isDone ? <Check size={22} /> : <KeyIcon size={22} weight="bold" aria-hidden="true" />}{label}
               </button>
             );
           }
           const open = () => (kind === 'meal' ? setView('meal') : startSession(kind));
-          return <button key={kind} className="k" disabled={!ready} onClick={open}>{label}</button>;
+          return (
+            <button key={kind} className="k icon" disabled={!ready} onClick={open}>
+              <KeyIcon size={22} weight="bold" aria-hidden="true" />{label}
+            </button>
+          );
         })}
         <button className="k voice" disabled={!ready} onClick={() => setView('voice')}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <rect x="8" y="2" width="8" height="12" rx="4" />
-            <path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8" />
-          </svg>
+          <Microphone size={22} weight="bold" aria-hidden="true" />
           <span>Say it</span>
         </button>
       </div>
